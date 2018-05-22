@@ -1,12 +1,14 @@
-package com.rau.bot.entity;
+package com.rau.bot.entity.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.neo4j.ogm.annotation.GraphId;
+import org.neo4j.ogm.annotation.GeneratedValue;
+import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
+
 
 @Getter
 @Setter
@@ -15,22 +17,25 @@ import org.neo4j.ogm.annotation.Relationship;
 @NodeEntity
 public class User {
 
-    @GraphId
+    @Id
+    @GeneratedValue
     private Long id;
 
-    private String userId;
     private String fullName;
+    private String userId;
     private String email;
 
-    @Relationship(type = "IS_IN", direction = Relationship.INCOMING)
-    private Department department;
+    private Boolean inFirstPart = true;
 
-    @Relationship(type = "IS_IN", direction = Relationship.INCOMING)
+    @Relationship(type = "IS_IN")
     private Faculty faculty;
 
-    @Relationship(type = "IS_IN", direction = Relationship.INCOMING)
+    @Relationship(type = "IS_IN")
     private Course course;
 
-    private boolean isArmenianSector;
+    @Relationship(type = "IS_IN")
+    private Group group;
+
+    private Boolean armenianSector = false;
 
 }

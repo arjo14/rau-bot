@@ -26,7 +26,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <messenger4j.version>1.0.0-M3</messenger4j.version>
-        <spring.boot.version>1.5.8.RELEASE</spring.boot.version>
         <lombok.version>1.16.18</lombok.version>
     </properties>
 
@@ -34,7 +33,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.messenger4j</groupId>
