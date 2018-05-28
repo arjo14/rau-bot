@@ -25,13 +25,14 @@ public class RauService {
     private final ClassRoomRepository classRoomRepository;
     private final WeekDayRepository weekDayRepository;
     private final LessonTypeRepository lessonTypeRepository;
+    private final ScheduleRepository scheduleRepository;
     private final LessonRepository lessonRepository;
 
 
     public RauService(UserRepository userRepository, DepartmentRepository departmentRepository, CourseRepository courseRepository,
                       FacultyRepository facultyRepository, LecturerRepository lecturerRepository, SubjectRepository subjectRepository,
                       ClassRoomRepository classRoomRepository, WeekDayRepository weekDayRepository, LessonTypeRepository lessonTypeRepository,
-                      LessonRepository lessonRepository) {
+                      ScheduleRepository scheduleRepository, LessonRepository lessonRepository) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
         this.courseRepository = courseRepository;
@@ -41,6 +42,7 @@ public class RauService {
         this.classRoomRepository = classRoomRepository;
         this.weekDayRepository = weekDayRepository;
         this.lessonTypeRepository = lessonTypeRepository;
+        this.scheduleRepository = scheduleRepository;
         this.lessonRepository = lessonRepository;
     }
 
@@ -89,7 +91,12 @@ public class RauService {
         return subjectRepository.findAll();
     }
 
-    public List<Lesson> getAllLessons() {
-        return lessonRepository.findAll();
+    public List<Schedule> getAllLessons() {
+        return scheduleRepository.findAll();
+    }
+
+    public String test() {
+        System.out.println();
+        return "test";
     }
 }

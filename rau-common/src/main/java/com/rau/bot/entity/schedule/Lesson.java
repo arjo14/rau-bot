@@ -1,8 +1,6 @@
 package com.rau.bot.entity.schedule;
 
-import com.rau.bot.entity.user.Course;
-import com.rau.bot.entity.user.Faculty;
-import com.rau.bot.entity.user.Group;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,24 +24,18 @@ public class Lesson {
     @Relationship(type = "HAS_LECTURER")
     private Lecturer lecturer;
 
-    @Relationship(type = "IS_IN")
-    private ClassRoom classRoom;
-
     @Relationship(type = "HAS_SUBJECT")
     private Subject subject;
 
-    @Relationship(type = "HAS_COURSE")
-    private Course course;
-
-    @Relationship(type = "HAS_GROUP")
-    private Group group;
-
-    @Relationship(type = "HAS_FACULTY")
-    private Faculty faculty;
+    @Relationship(type = "IS_IN")
+    private ClassRoom classRoom;
 
     @Relationship(type = "HAS_TYPE")
     private LessonType lessonType;
 
-    private Boolean onceIn2Week;
-    private Boolean shareInGroups;
+    @Relationship(type = "HAS_NEXT_WEEK_LESSON")
+    private Lesson nextWeekLesson;
+
+    private Boolean sameAsTheNextWeek;
+    private Boolean mainLesson;
 }

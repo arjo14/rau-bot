@@ -8,6 +8,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.util.Arrays;
+
 @SpringBootApplication
 public class BackendStarter implements CommandLineRunner {
     private final UserRepository userRepository;
@@ -16,25 +18,33 @@ public class BackendStarter implements CommandLineRunner {
     private final FacultyRepository facultyRepository;
     private final ClassRoomRepository classRoomRepository;
     private final LecturerRepository lecturerRepository;
-    private final LessonRepository lessonRepository;
+    private final ScheduleRepository scheduleRepository;
     private final SubjectRepository subjectRepository;
     private final WeekDayRepository weekDayRepository;
     private final GroupRepository groupRepository;
     private final LessonTypeRepository lessonTypeRepository;
+    private final LessonRepository lessonRepository;
+    private final WeekDayLessonRepository weekDayLessonRepository;
+    private final HourLessonRepository hourLessonRepository;
+    private final HourRepository hourRepository;
 
 
-    public BackendStarter(UserRepository userRepository, CourseRepository courseRepository, DepartmentRepository departmentRepository, FacultyRepository facultyRepository, ClassRoomRepository classRoomRepository, LecturerRepository lecturerRepository, LessonRepository lessonRepository, SubjectRepository subjectRepository, WeekDayRepository weekDayRepository, GroupRepository groupRepository, LessonTypeRepository lessonTypeRepository) {
+    public BackendStarter(UserRepository userRepository, CourseRepository courseRepository, DepartmentRepository departmentRepository, FacultyRepository facultyRepository, ClassRoomRepository classRoomRepository, LecturerRepository lecturerRepository, ScheduleRepository scheduleRepository, SubjectRepository subjectRepository, WeekDayRepository weekDayRepository, GroupRepository groupRepository, LessonTypeRepository lessonTypeRepository, LessonRepository lessonRepository, WeekDayLessonRepository weekDayLessonRepository, HourLessonRepository hourLessonRepository, HourRepository hourRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.departmentRepository = departmentRepository;
         this.facultyRepository = facultyRepository;
         this.classRoomRepository = classRoomRepository;
         this.lecturerRepository = lecturerRepository;
-        this.lessonRepository = lessonRepository;
+        this.scheduleRepository = scheduleRepository;
         this.subjectRepository = subjectRepository;
         this.weekDayRepository = weekDayRepository;
         this.groupRepository = groupRepository;
         this.lessonTypeRepository = lessonTypeRepository;
+        this.lessonRepository = lessonRepository;
+        this.weekDayLessonRepository = weekDayLessonRepository;
+        this.hourLessonRepository = hourLessonRepository;
+        this.hourRepository = hourRepository;
     }
 
     public static void main(String[] args) {
@@ -51,11 +61,18 @@ public class BackendStarter implements CommandLineRunner {
         facultyRepository.deleteAll();
         groupRepository.deleteAll();
 
+
         classRoomRepository.deleteAll();
         lecturerRepository.deleteAll();
-        lessonRepository.deleteAll();
+        scheduleRepository.deleteAll();
+        lessonTypeRepository.deleteAll();
         subjectRepository.deleteAll();
         weekDayRepository.deleteAll();
+        lessonRepository.deleteAll();
+        weekDayRepository.deleteAll();
+        weekDayLessonRepository.deleteAll();
+        hourLessonRepository.deleteAll();
+        hourRepository.deleteAll();
         //endregion
 
         // creating class rooms
@@ -115,17 +132,21 @@ public class BackendStarter implements CommandLineRunner {
             subject = new Subject(subjectName);
         }
 
+        Schedule schedule = new Schedule();
         Lesson lesson = new Lesson();
         lesson.setClassRoom(classRoom);
-        lesson.setCourse(course);
+        schedule.setCourse(course);
         lesson.setLecturer(lecturer);
-        lesson.setFaculty(faculty);
-        lesson.setGroup(group);
+        schedule.setFaculty(faculty);
+        schedule.setGroup(group);
         lesson.setSubject(subject);
+        schedule.setWeekDayLessons(Arrays.asList(new WeekDayLesson(new WeekDay("Monday"), Arrays.asList(new HourLesson(new Hour("1-st"), Arrays.asList(lesson))))));
         lesson.setLessonType(lessonTypeRepository.findByName("Проработка"));
-        lesson.setOnceIn2Week(false);
-        lesson.setShareInGroups(false);
+        lesson.setSameAsTheNextWeek(false);
+        scheduleRepository.save(schedule);
+        lesson.setNextWeekLesson(lesson);
         lessonRepository.save(lesson);
+        scheduleRepository.save(schedule);
     }
 
     private void createLessonTypes() {

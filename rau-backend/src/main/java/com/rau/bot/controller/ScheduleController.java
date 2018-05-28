@@ -17,6 +17,11 @@ public class ScheduleController {
         this.rauService = rauService;
     }
 
+    @GetMapping("/test")
+    public ResponseEntity<?> test(){
+        return ResponseEntity.ok(rauService.test());
+    }
+
     @PostMapping("/add/faculty/{faculty}/{department}")
     public ResponseEntity<Faculty> addFaculty(@PathVariable("faculty") String faculty,
                                               @PathVariable("department") String department) {
