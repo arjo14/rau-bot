@@ -1,9 +1,6 @@
 package com.rau.bot;
 
-import com.rau.bot.entity.schedule.ClassRoom;
-import com.rau.bot.entity.schedule.Lecturer;
-import com.rau.bot.entity.schedule.Lesson;
-import com.rau.bot.entity.schedule.Subject;
+import com.rau.bot.entity.schedule.*;
 import com.rau.bot.entity.user.*;
 import com.rau.bot.repository.schedule.*;
 import com.rau.bot.repository.user.*;
@@ -23,9 +20,10 @@ public class BackendStarter implements CommandLineRunner {
     private final SubjectRepository subjectRepository;
     private final WeekDayRepository weekDayRepository;
     private final GroupRepository groupRepository;
+    private final LessonTypeRepository lessonTypeRepository;
 
 
-    public BackendStarter(UserRepository userRepository, CourseRepository courseRepository, DepartmentRepository departmentRepository, FacultyRepository facultyRepository, ClassRoomRepository classRoomRepository, LecturerRepository lecturerRepository, LessonRepository lessonRepository, SubjectRepository subjectRepository, WeekDayRepository weekDayRepository, GroupRepository groupRepository) {
+    public BackendStarter(UserRepository userRepository, CourseRepository courseRepository, DepartmentRepository departmentRepository, FacultyRepository facultyRepository, ClassRoomRepository classRoomRepository, LecturerRepository lecturerRepository, LessonRepository lessonRepository, SubjectRepository subjectRepository, WeekDayRepository weekDayRepository, GroupRepository groupRepository, LessonTypeRepository lessonTypeRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.departmentRepository = departmentRepository;
@@ -36,6 +34,7 @@ public class BackendStarter implements CommandLineRunner {
         this.subjectRepository = subjectRepository;
         this.weekDayRepository = weekDayRepository;
         this.groupRepository = groupRepository;
+        this.lessonTypeRepository = lessonTypeRepository;
     }
 
     public static void main(String[] args) {
@@ -61,6 +60,7 @@ public class BackendStarter implements CommandLineRunner {
 
         // creating class rooms
 //        createClassRooms();
+        createLessonTypes();
 
         String courseName = "3";
         Course course = courseRepository.findByName(courseName);
@@ -122,14 +122,22 @@ public class BackendStarter implements CommandLineRunner {
         lesson.setFaculty(faculty);
         lesson.setGroup(group);
         lesson.setSubject(subject);
+        lesson.setLessonType(lessonTypeRepository.findByName("Проработка"));
         lesson.setOnceIn2Week(false);
         lesson.setShareInGroups(false);
         lessonRepository.save(lesson);
     }
 
+    private void createLessonTypes() {
+        lessonTypeRepository.save(new LessonType("Лекция"));
+        lessonTypeRepository.save(new LessonType("Проработка"));
+    }
+
     private void createClassRooms() {
-        for (int i = 300; i < 330; i++) {
+        for (int i = 1; i < 450; i++) {
             classRoomRepository.save(new ClassRoom(i + ""));
         }
+        classRoomRepository.save(new ClassRoom("Синий зал"));
+        classRoomRepository.save(new ClassRoom("Дом Культуры Рау"));
     }
 }

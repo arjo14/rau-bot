@@ -41,6 +41,9 @@ public class Lesson {
     @Relationship(type = "HAS_FACULTY")
     private Faculty faculty;
 
+    @Relationship(type = "HAS_TYPE")
+    private LessonType lessonType;
+
     private Boolean onceIn2Week;
     private Boolean shareInGroups;
 }
