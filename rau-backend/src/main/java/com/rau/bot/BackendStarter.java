@@ -140,7 +140,21 @@ public class BackendStarter implements CommandLineRunner {
         schedule.setFaculty(faculty);
         schedule.setGroup(group);
         lesson.setSubject(subject);
-        schedule.setWeekDayLessons(Arrays.asList(new WeekDayLesson(new WeekDay("Monday"), Arrays.asList(new HourLesson(new Hour("1-st"), Arrays.asList(lesson))))));
+
+
+        WeekDay weekDay = new WeekDay("Monday");
+        Hour hour = new Hour("1-st");
+        HourLesson hourLesson = new HourLesson(hour, null);
+        LessonRelationship lessonRelationship = new LessonRelationship(hourLesson, lesson);
+        hourLesson.setLessons(Arrays.asList(lessonRelationship));
+
+        WeekDayLesson weekDayLesson = new WeekDayLesson(weekDay, null);
+        HourLessonRelationship hourLessonRelationship = new HourLessonRelationship(weekDayLesson, hourLesson);
+        weekDayLesson.setHourLessons(Arrays.asList(hourLessonRelationship));
+        WeekDayLessonRelationship weekDayLessonRelationship = new WeekDayLessonRelationship(schedule, weekDayLesson);
+
+        schedule.setWeekDayLessons(Arrays.asList(weekDayLessonRelationship));
+
         lesson.setLessonType(lessonTypeRepository.findByName("Проработка"));
         lesson.setSameAsTheNextWeek(false);
         scheduleRepository.save(schedule);

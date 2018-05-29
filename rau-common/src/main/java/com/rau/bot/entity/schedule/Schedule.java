@@ -35,7 +35,7 @@ public class Schedule {
     @Relationship(type = "HAS_FACULTY")
     private Faculty faculty;
 
-    @Relationship(type = "HAS_LESSON")
-    private List<WeekDayLesson> weekDayLessons;
+    @Relationship(type = "HAS_WEEK_DAY_LESSON")
+    private List<WeekDayLessonRelationship> weekDayLessons;
 
 }

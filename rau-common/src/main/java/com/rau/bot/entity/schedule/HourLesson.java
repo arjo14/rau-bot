@@ -25,10 +25,10 @@ public class HourLesson {
     @Relationship(type = "HAS_HOURS")
     private Hour hour;
 
-    @Relationship(type = "HAS_LESSONS")
-    private List<Lesson> lessons;
+    @Relationship(type = "HAS_LESSON")
+    private List<LessonRelationship> lessons;
 
-    public HourLesson(Hour hour, List<Lesson> lessons) {
+    public HourLesson(Hour hour, List<LessonRelationship> lessons) {
         this.hour = hour;
         this.lessons = lessons;
     }

@@ -25,10 +25,10 @@ public class WeekDayLesson {
     @Relationship(type = "HAS_WEEKDAY")
     private WeekDay weekDay;
 
-    @Relationship(type = "HAS_HOURS_LESSONS")
-    private List<HourLesson> hourLessons;
+    @Relationship(type = "HAS_HOUR_LESSON")
+    private List<HourLessonRelationship> hourLessons;
 
-    public WeekDayLesson(WeekDay weekDay, List<HourLesson> hourLessons) {
+    public WeekDayLesson(WeekDay weekDay, List<HourLessonRelationship> hourLessons) {
         this.weekDay = weekDay;
         this.hourLessons = hourLessons;
     }
