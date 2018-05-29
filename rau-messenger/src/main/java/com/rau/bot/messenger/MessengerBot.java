@@ -18,10 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 import static java.util.Optional.of;
 
@@ -98,6 +95,20 @@ public class MessengerBot {
             log.error(e.getMessage());
         }
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PostMapping("/send/text")
+    public ResponseEntity<?> sendTextMessage(@RequestParam("userId") String userId,
+                                             @RequestParam("text") String text) throws MessengerApiException, MessengerIOException {
+
+        sendTextMessageToUser(userId,text);
+        return ResponseEntity.ok().build();
+    }
+
+    private void sendTextMessageToUser(String userId, String text) throws MessengerApiException, MessengerIOException {
+        final MessagePayload payload = MessagePayload.create(userId,
+                MessagingType.RESPONSE, TextMessage.create(text));
+        messenger.send(payload);
     }
 
     private void newTextMessageEventHandler(TextMessageEvent event) {

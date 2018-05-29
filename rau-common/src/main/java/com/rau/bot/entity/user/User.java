@@ -21,8 +21,8 @@ public class User {
     @GeneratedValue
     private Long id;
 
-    private String fullName;
     private String userId;
+    private String fullName;
     private String email;
 
     private Boolean inFirstPart = true;
@@ -37,5 +37,6 @@ public class User {
     private Group group;
 
     private Boolean armenianSector = false;
+    private Boolean fromFirstPart;
 
 }

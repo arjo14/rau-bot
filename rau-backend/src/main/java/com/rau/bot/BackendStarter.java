@@ -7,11 +7,14 @@ import com.rau.bot.repository.user.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.PropertySource;
 
 import java.util.Arrays;
 
 @SpringBootApplication
+@PropertySource({"classpath:network.properties"})
 public class BackendStarter implements CommandLineRunner {
+
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
     private final DepartmentRepository departmentRepository;
@@ -77,6 +80,8 @@ public class BackendStarter implements CommandLineRunner {
 
         // creating class rooms
 //        createClassRooms();
+
+        //creating lesson types
         createLessonTypes();
 
         String courseName = "3";
@@ -107,6 +112,7 @@ public class BackendStarter implements CommandLineRunner {
         user.setUserId("User 1");
         user.setEmail("jo@jo.jo2");
         user.setGroup(group);
+        user.setFromFirstPart(true);
         userRepository.save(user);
 
 
@@ -139,8 +145,10 @@ public class BackendStarter implements CommandLineRunner {
         lesson.setLecturer(lecturer);
         schedule.setFaculty(faculty);
         schedule.setGroup(group);
+        schedule.setFromFirstPart(true);
+        schedule.setArmenianSector(false);
         lesson.setSubject(subject);
-        schedule.setWeekDayLessons(Arrays.asList(new WeekDayLesson(new WeekDay("Monday"), Arrays.asList(new HourLesson(new Hour("1-st"), Arrays.asList(lesson))))));
+        schedule.setWeekDayLessons(Arrays.asList(new WeekDayLesson(new WeekDay("Monday"), Arrays.asList(new HourLesson(new Hour("1"), lesson)))));
         lesson.setLessonType(lessonTypeRepository.findByName("Проработка"));
         lesson.setSameAsTheNextWeek(false);
         scheduleRepository.save(schedule);

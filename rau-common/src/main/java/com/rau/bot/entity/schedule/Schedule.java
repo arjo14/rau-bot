@@ -13,7 +13,6 @@ import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
 import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -26,14 +25,18 @@ public class Schedule {
     @GeneratedValue
     private Long id;
 
+    @Relationship(type = "HAS_FACULTY")
+    private Faculty faculty;
+
     @Relationship(type = "HAS_COURSE")
     private Course course;
 
     @Relationship(type = "HAS_GROUP")
     private Group group;
 
-    @Relationship(type = "HAS_FACULTY")
-    private Faculty faculty;
+    private Boolean fromFirstPart;
+
+    private Boolean armenianSector;
 
     @Relationship(type = "HAS_LESSON")
     private List<WeekDayLesson> weekDayLessons;

@@ -9,8 +9,6 @@ import org.neo4j.ogm.annotation.Id;
 import org.neo4j.ogm.annotation.NodeEntity;
 import org.neo4j.ogm.annotation.Relationship;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,11 +23,11 @@ public class HourLesson {
     @Relationship(type = "HAS_HOURS")
     private Hour hour;
 
-    @Relationship(type = "HAS_LESSONS")
-    private List<Lesson> lessons;
+    @Relationship(type = "HAS_LESSON")
+    private Lesson lesson;
 
-    public HourLesson(Hour hour, List<Lesson> lessons) {
+    public HourLesson(Hour hour, Lesson lesson) {
         this.hour = hour;
-        this.lessons = lessons;
+        this.lesson = lesson;
     }
 }

@@ -38,4 +38,9 @@ public class Lesson {
 
     private Boolean sameAsTheNextWeek;
     private Boolean mainLesson;
+
+    @Override
+    public String toString() {
+        return subject.getName() + ", " + lessonType.getName() + ", " + lecturer.getName() + ", " + classRoom.getName();
+    }
 }
