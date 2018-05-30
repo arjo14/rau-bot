@@ -2,9 +2,19 @@ package com.rau.bot.messenger;
 
 
 import com.github.messenger4j.Messenger;
+import com.github.messenger4j.common.SupportedLocale;
 import com.github.messenger4j.exception.MessengerApiException;
 import com.github.messenger4j.exception.MessengerIOException;
 import com.github.messenger4j.exception.MessengerVerificationException;
+import com.github.messenger4j.messengerprofile.MessengerSettingProperty;
+import com.github.messenger4j.messengerprofile.MessengerSettings;
+import com.github.messenger4j.messengerprofile.getstarted.StartButton;
+import com.github.messenger4j.messengerprofile.greeting.Greeting;
+import com.github.messenger4j.messengerprofile.greeting.LocalizedGreeting;
+import com.github.messenger4j.messengerprofile.persistentmenu.LocalizedPersistentMenu;
+import com.github.messenger4j.messengerprofile.persistentmenu.PersistentMenu;
+import com.github.messenger4j.messengerprofile.persistentmenu.action.NestedCallToAction;
+import com.github.messenger4j.messengerprofile.persistentmenu.action.PostbackCallToAction;
 import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.SenderActionPayload;
@@ -16,10 +26,15 @@ import com.github.messenger4j.webhook.event.QuickReplyMessageEvent;
 import com.github.messenger4j.webhook.event.TextMessageEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Arrays;
+import java.util.Optional;
+
+import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
 @RestController
@@ -29,10 +44,48 @@ public class MessengerBot {
 
     @Value("${messenger4j.pageAccessToken}")
     private String pageAccessToken;
+    @Value("backend.url")
+    private String backendUrl;
 
     public MessengerBot(@Value("${messenger4j.appSecret}") final String appSecret,
-                        @Value("${messenger4j.verifyToken}") final String verifyToken, @Value("${messenger4j.pageAccessToken}") final String pageAccessToken) {
+                        @Value("${messenger4j.verifyToken}") final String verifyToken, @Value("${messenger4j.pageAccessToken}") final String pageAccessToken) throws MessengerApiException, MessengerIOException {
+
         this.messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
+        messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
+
+        final PostbackCallToAction callToActionAA = PostbackCallToAction.create("Now", "NOW");
+        final PostbackCallToAction callToActionAB = PostbackCallToAction.create("Today", "TODAY");
+        final PostbackCallToAction callToActionAC = PostbackCallToAction.create("This week", "THIS_WEEK");
+        final NestedCallToAction callToActionForSchedule = NestedCallToAction.create("\uD83D\uDDD3️ Schedule",
+                Arrays.asList(callToActionAA, callToActionAB, callToActionAC));
+
+
+        final PostbackCallToAction callToActionAA1 = PostbackCallToAction.create("⏭️ Next", "NEXT_MODULE");
+        final PostbackCallToAction callToActionAC1 = PostbackCallToAction.create("☠️ All upcoming", "ALL_MODULES");
+
+        final PostbackCallToAction callToActionAA2 = PostbackCallToAction.create("⏭️ Next", "NEXT_EXAM");
+        final PostbackCallToAction callToActionAC2 = PostbackCallToAction.create("☠️ All upcoming", "ALL_EXAMS");
+
+        final NestedCallToAction callToActionForModules = NestedCallToAction.create("\uD83D\uDD14 Modules",
+                Arrays.asList(callToActionAA1, callToActionAC1));
+
+        final NestedCallToAction callToActionForFinalExams = NestedCallToAction.create("\uD83D\uDD14 Exams",
+                Arrays.asList(callToActionAA2, callToActionAC2));
+
+        final NestedCallToAction callToActionForExams = NestedCallToAction.create("\uD83D\uDD14 Exams",
+                Arrays.asList(callToActionForModules, callToActionForFinalExams));
+
+        final PostbackCallToAction callToAction4 = PostbackCallToAction.create("\uD83D\uDEE0️ Register", "REGISTER");
+
+        final Greeting greeting = Greeting.create("Hello!", LocalizedGreeting.create(SupportedLocale.en_US,
+                "This is a RAU bot ! "));
+
+        final PersistentMenu persistentMenu = PersistentMenu.create(true,
+                of(Arrays.asList(callToActionForSchedule, callToActionForExams, callToAction4)),
+                LocalizedPersistentMenu.create(SupportedLocale.cs_CZ, false, empty()));
+
+        MessengerSettings messengerSettings = MessengerSettings.create(of(StartButton.create("Բարլուսիկ")), of(greeting), of(persistentMenu), empty(), empty(), empty(), empty());
+        messenger.updateSettings(messengerSettings);
     }
 
     /**
@@ -101,7 +154,7 @@ public class MessengerBot {
     public ResponseEntity<?> sendTextMessage(@RequestParam("userId") String userId,
                                              @RequestParam("text") String text) throws MessengerApiException, MessengerIOException {
 
-        sendTextMessageToUser(userId,text);
+        sendTextMessageToUser(userId, text);
         return ResponseEntity.ok().build();
     }
 
@@ -125,8 +178,51 @@ public class MessengerBot {
 
     //region Unimportant methods
 
-    private void newPostbackEventHandler(PostbackEvent postbackEvent) {
+    private void newPostbackEventHandler(PostbackEvent event) {
         log.info("Received new Postback event.");
+        Optional<String> payloadOpt = event.payload();
+        String urlStr = "";
+
+        if (payloadOpt.isPresent()) {
+            switch (payloadOpt.get()) {
+                case "NOW":
+                    urlStr = "/schedule/now";
+                    break;
+                case "TODAY":
+                    urlStr = "/schedule/today";
+                    break;
+                case "THIS_WEEK":
+                    urlStr = "/schedule/this/week";
+                    break;
+                case "NEXT_MODULE":
+                    urlStr = "/module/next";
+                    break;
+                case "ALL_MODULES":
+                    urlStr = "/module/all";
+                    break;
+                case "NEXT_EXAM":
+                    urlStr = "/exam/next";
+                    break;
+                case "ALL_EXAMS":
+                    urlStr = "/exam/all";
+                    break;
+                case "REGISTER":
+                    return;
+            }
+            RestTemplate restTemplate = new RestTemplate();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(backendUrl + urlStr)
+                    .queryParam("userId", event.senderId());
+
+
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+
+            restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class);
+        }
     }
 
     private void newReferralEventHandler() {

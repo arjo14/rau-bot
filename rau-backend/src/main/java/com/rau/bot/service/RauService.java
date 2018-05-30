@@ -223,6 +223,12 @@ public class RauService {
         sendOneDayScheduleToUser(user, localDateTime);
     }
 
+    public void sendTomorrowsScheduleToUser(User user) {
+        LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
+
+        sendOneDayScheduleToUser(user, localDateTime);
+    }
+
     private void sendOneDayScheduleToUser(User user, LocalDateTime localDateTime) {
         StringBuilder text = new StringBuilder();
         Schedule schedule = getScheduleForUser(user);
@@ -238,12 +244,6 @@ public class RauService {
             }
         }
         sendTextMessageToMessengerUser(user.getUserId(), text.toString());
-    }
-
-    public void sendTomorrowsScheduleToUser(User user) {
-        LocalDateTime localDateTime = LocalDateTime.now().plusDays(1);
-
-        sendOneDayScheduleToUser(user, localDateTime);
     }
 
     private void sendTextMessageToMessengerUser(String userId, String text) {
