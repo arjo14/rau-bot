@@ -7,5 +7,8 @@ import java.util.List;
 
 public interface UserRepository extends Neo4jRepository<User, Long> {
     List<User> findAll();
+
     User findByUserIdEquals(String userId);
+
+    User findUserByFullNameEquals(String fullName);
 }

@@ -1,7 +1,15 @@
 package com.rau.bot;
 
+import com.rau.bot.entity.exams.Exam;
+import com.rau.bot.entity.exams.ExamSchedule;
+import com.rau.bot.entity.exams.Module;
+import com.rau.bot.entity.exams.ModuleSchedule;
 import com.rau.bot.entity.schedule.*;
 import com.rau.bot.entity.user.*;
+import com.rau.bot.repository.exam.ExamRepository;
+import com.rau.bot.repository.exam.ExamScheduleRepository;
+import com.rau.bot.repository.exam.ModuleRepository;
+import com.rau.bot.repository.exam.ModuleScheduleRepository;
 import com.rau.bot.repository.schedule.*;
 import com.rau.bot.repository.user.*;
 import org.springframework.boot.CommandLineRunner;
@@ -9,7 +17,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 @SpringBootApplication
 @PropertySource({"classpath:network.properties"})
@@ -30,9 +43,22 @@ public class BackendStarter implements CommandLineRunner {
     private final WeekDayLessonRepository weekDayLessonRepository;
     private final HourLessonRepository hourLessonRepository;
     private final HourRepository hourRepository;
+    private final ExamRepository examRepository;
+    private final ExamScheduleRepository examScheduleRepository;
+    private final ModuleRepository moduleRepository;
+    private final ModuleScheduleRepository moduleScheduleRepository;
 
 
-    public BackendStarter(UserRepository userRepository, CourseRepository courseRepository, DepartmentRepository departmentRepository, FacultyRepository facultyRepository, ClassRoomRepository classRoomRepository, LecturerRepository lecturerRepository, ScheduleRepository scheduleRepository, SubjectRepository subjectRepository, WeekDayRepository weekDayRepository, GroupRepository groupRepository, LessonTypeRepository lessonTypeRepository, LessonRepository lessonRepository, WeekDayLessonRepository weekDayLessonRepository, HourLessonRepository hourLessonRepository, HourRepository hourRepository) {
+    public BackendStarter(UserRepository userRepository, CourseRepository courseRepository,
+                          DepartmentRepository departmentRepository, FacultyRepository facultyRepository,
+                          ClassRoomRepository classRoomRepository, LecturerRepository lecturerRepository,
+                          ScheduleRepository scheduleRepository, SubjectRepository subjectRepository,
+                          WeekDayRepository weekDayRepository, GroupRepository groupRepository,
+                          LessonTypeRepository lessonTypeRepository, LessonRepository lessonRepository,
+                          WeekDayLessonRepository weekDayLessonRepository, HourLessonRepository hourLessonRepository,
+                          HourRepository hourRepository, ExamRepository examRepository,
+                          ExamScheduleRepository examScheduleRepository, ModuleRepository moduleRepository,
+                          ModuleScheduleRepository moduleScheduleRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.departmentRepository = departmentRepository;
@@ -48,6 +74,10 @@ public class BackendStarter implements CommandLineRunner {
         this.weekDayLessonRepository = weekDayLessonRepository;
         this.hourLessonRepository = hourLessonRepository;
         this.hourRepository = hourRepository;
+        this.examRepository = examRepository;
+        this.examScheduleRepository = examScheduleRepository;
+        this.moduleRepository = moduleRepository;
+        this.moduleScheduleRepository = moduleScheduleRepository;
     }
 
     public static void main(String[] args) {
@@ -56,6 +86,126 @@ public class BackendStarter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+//        createDepartments();
+//        createFaculties();
+//        createGroups();
+//        createLecturers();
+//        createSubjects();
+
+
+//        createMyModules();
+//        createMyExams();
+//        createMyGroupSchedule();
+
+
+    }
+
+    private void createGroups() {
+        groupRepository.save(new Group("501"));
+        groupRepository.save(new Group("502"));
+        groupRepository.save(new Group("503"));
+        groupRepository.save(new Group("504"));
+    }
+
+    private void createFaculties() {
+        facultyRepository.save(new Faculty("ПМИ", departmentRepository.findByName("ИМВТ")));
+    }
+
+    private void createDepartments() {
+        departmentRepository.save(new Department("ИМВТ"));
+    }
+
+    private void createMyExams() throws ParseException {
+        examRepository.deleteAll();
+        examScheduleRepository.deleteAll();
+
+        User user = userRepository.findUserByFullNameEquals("John Vahanyan");
+
+        ExamSchedule examSchedule = new ExamSchedule();
+
+        examSchedule.setCourse(user.getCourse());
+        examSchedule.setFaculty(user.getFaculty());
+        examSchedule.setArmenianSector(user.getArmenianSector());
+        examSchedule.setFromFirstPart(user.getFromFirstPart());
+        examSchedule.setGroup(user.getGroup());
+
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
+
+        List<Exam> examList = new ArrayList<>();
+
+        Exam exam = new Exam(null, Collections.singletonList(new Lecturer("Карапетян Г.А.")),
+                new Subject("Уравнения математической физики"), classRoomRepository.findByName("305"),
+                "09:00", dateFormatter.parse("30.06.2018"));
+        examList.add(exam);
+
+        exam = new Exam(null, Collections.singletonList(new Lecturer("Манукян М.Г.")),
+                new Subject("База данных"), classRoomRepository.findByName("305"),
+                "09:00", dateFormatter.parse("16.06.2018"));
+        examList.add(exam);
+
+        exam = new Exam(null, Arrays.asList(new Lecturer("Ваградян В.Г."), new Lecturer("Беджанян А.Р.")),
+                new Subject("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
+                "09:00", dateFormatter.parse("20.06.2018"));
+        examList.add(exam);
+
+        exam = new Exam(null, Collections.singletonList(new Lecturer("Арамян Р.Г.")),
+                new Subject("Теория вер. и мат статистика"), classRoomRepository.findByName("305"),
+                "09:00", dateFormatter.parse("11.06.2018"));
+        examList.add(exam);
+
+        examSchedule.setExams(examList);
+        examScheduleRepository.save(examSchedule);
+
+    }
+
+    private void createMyModules() throws ParseException {
+        moduleScheduleRepository.deleteAll();
+        moduleRepository.deleteAll();
+        User user = userRepository.findUserByFullNameEquals("John Vahanyan");
+        ModuleSchedule moduleSchedule = new ModuleSchedule();
+        moduleSchedule.setCourse(user.getCourse());
+        moduleSchedule.setFaculty(user.getFaculty());
+        moduleSchedule.setArmenianSector(user.getArmenianSector());
+        moduleSchedule.setFromFirstPart(user.getFromFirstPart());
+        moduleSchedule.setGroup(user.getGroup());
+
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
+
+        List<Module> moduleList = new ArrayList<>();
+
+        Module module = new Module(null, Collections.singletonList(new Lecturer("Карапетян Г.А.")),
+                new Subject("Уравнения математической физики"), classRoomRepository.findByName("301"),
+                "12:50", dateFormatter.parse("06.06.2018"));
+        moduleList.add(module);
+
+
+        module = new Module(null, Collections.singletonList(new Lecturer("Манукян М.Г.")),
+                new Subject("База Данных"), classRoomRepository.findByName("300"),
+                "14:35", dateFormatter.parse("01.06.2018"));
+        moduleList.add(module);
+
+
+        module = new Module(null, Arrays.asList(new Lecturer("Арамян Р.Г.")),
+                new Subject("Теория вер. и мат статистика"), classRoomRepository.findByName("313"),
+                "10:45", dateFormatter.parse("04.06.2018"));
+        moduleList.add(module);
+
+        module = new Module(null, Arrays.asList(new Lecturer("Ваградян В.Г."), new Lecturer("Беджанян А.Р.")),
+                new Subject("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
+                "10:45", dateFormatter.parse("07.06.2018"));
+        moduleList.add(module);
+
+        module = new Module(null, Collections.singletonList(new Lecturer("Карапетян Г.А.")),
+                new Subject("Курсовая работа"), classRoomRepository.findByName("300"),
+                "09:00", dateFormatter.parse("08.06.2018"));
+        moduleList.add(module);
+
+        moduleSchedule.setModules(moduleList);
+        moduleScheduleRepository.save(moduleSchedule);
+
+    }
+
+    private void createMyGroupSchedule() {
 
         //region drop database
         userRepository.deleteAll();
@@ -79,10 +229,11 @@ public class BackendStarter implements CommandLineRunner {
         //endregion
 
         // creating class rooms
-//        createClassRooms();
+        createClassRooms();
 
         //creating lesson types
         createLessonTypes();
+        createHours();
 
         String courseName = "3";
         Course course = courseRepository.findByName(courseName);
@@ -108,8 +259,8 @@ public class BackendStarter implements CommandLineRunner {
         User user = new User();
         user.setCourse(course);
         user.setFaculty(faculty);
-        user.setFullName("123456789");
-        user.setUserId("User 1");
+        user.setFullName("John Vahanyan");
+        user.setUserId("1891946597506656");
         user.setEmail("jo@jo.jo2");
         user.setGroup(group);
         user.setFromFirstPart(true);
@@ -126,35 +277,153 @@ public class BackendStarter implements CommandLineRunner {
         faculty = facultyRepository.findByName(faculty.getName());
         group = groupRepository.findByName(group.getName());
 
-        String lecturerName = "Карапетян Г. А.";
-        Lecturer lecturer = lecturerRepository.findByName(lecturerName);
-        if (lecturer == null) {
-            lecturer = new Lecturer(lecturerName);
-        }
-
-        String subjectName = "Мат. Физ";
-        Subject subject = subjectRepository.findByName(subjectName);
-        if (subject == null) {
-            subject = new Subject(subjectName);
-        }
-
         Schedule schedule = new Schedule();
-        Lesson lesson = new Lesson();
-        lesson.setClassRoom(classRoom);
-        schedule.setCourse(course);
-        lesson.setLecturer(lecturer);
         schedule.setFaculty(faculty);
+        schedule.setCourse(course);
         schedule.setGroup(group);
         schedule.setFromFirstPart(true);
         schedule.setArmenianSector(false);
-        lesson.setSubject(subject);
-        schedule.setWeekDayLessons(Arrays.asList(new WeekDayLesson(new WeekDay("Monday"), Arrays.asList(new HourLesson(new Hour("1"), lesson)))));
-        lesson.setLessonType(lessonTypeRepository.findByName("Проработка"));
-        lesson.setSameAsTheNextWeek(false);
+
+        List<WeekDayLesson> weekDayLessons = new ArrayList<>();
+        List<HourLesson> hourLessons = new ArrayList<>();
+
+        //region Monday
+        Lesson lesson = new Lesson(null, new Lecturer("Карапетян Г.А."),
+                new Subject("Уравнения математической физики"),
+                classRoomRepository.findByName("301"), lessonTypeRepository.findByName("Лекция"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
+        lesson = new Lesson(null, new Lecturer("Арамян Р.Г."),
+                new Subject("Теория вер. и мат. статистика"),
+                classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Проработка"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
+        lesson = new Lesson(null, new Lecturer("Атаян"),
+                new Subject("Физика"),
+                classRoomRepository.findByName("317"), lessonTypeRepository.findByName("Проработка"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
+        lesson = new Lesson(null, new Lecturer("Маилян С.С."),
+                new Subject("Физика"),
+                classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Лекция"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("4"), lesson));
+
+        weekDayLessons.add(new WeekDayLesson(new WeekDay("Monday", 1), hourLessons));
+
+        //endregion
+        hourLessons = new ArrayList<>();
+
+        //region Tuesday
+        lesson = new Lesson(null, new Lecturer("Арамян Р.Г."),
+                new Subject("Теория вер. и мат. статистика"),
+                classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Лекция"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
+
+        lesson = new Lesson(null, new Lecturer("Аветисян П.С."),
+                new Subject("Функц. анализ"),
+                classRoomRepository.findByName("309"), lessonTypeRepository.findByName("Лекция"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
+
+        lesson = new Lesson(null, new Lecturer("Атаян"),
+                new Subject("Яз. и мет. прог. (Java)"),
+                classRoomRepository.findByName("200"), lessonTypeRepository.findByName("Проработка"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
+
+        weekDayLessons.add(new WeekDayLesson(new WeekDay("Tuesday", 2), hourLessons));
+        //endregion
+        hourLessons = new ArrayList<>();
+
+        //region Wednesday
+        lesson = new Lesson(null, new Lecturer("Оганезова Г.Г."),
+                new Subject("Концепции современного естествознания"),
+                classRoomRepository.findByName("Синий зал"), lessonTypeRepository.findByName("Лекция"),
+                new Lesson(null, new Lecturer("Оганезова Г.Г."),
+                        new Subject("Концепции современного естествознания"),
+                        classRoomRepository.findByName("305"), lessonTypeRepository.findByName("Проработка"),
+                        null, false, false), false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
+
+        lesson = new Lesson(null, new Lecturer("Нигиян С.А."),
+                new Subject("Языки программирования и методы трансляции"),
+                classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Проработка"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
+
+        lesson = new Lesson(null, new Lecturer("Карапетян Г.А."),
+                new Subject("Уравнения математической физики"),
+                classRoomRepository.findByName("301"), lessonTypeRepository.findByName("Лекция"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
+
+        weekDayLessons.add(new WeekDayLesson(new WeekDay("Wednesday", 3), hourLessons));
+        //endregion
+        hourLessons = new ArrayList<>();
+
+        //region Thursday
+        lesson = new Lesson(null, new Lecturer("Акопян Ю.Р."),
+                new Subject("Численные методы"),
+                classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Лекция"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
+        lesson = new Lesson(null, new Lecturer("Беджанян А.Р."),
+                new Subject("Яз. прогр. и мет. трансляции"),
+                classRoomRepository.findByName("305"), lessonTypeRepository.findByName("Проработка"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
+        lesson = new Lesson(null, new Lecturer("Амбарцумян"),
+                new Subject("СК МК Комбинаторная интегральная геометрия"),
+                classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Проработка"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
+        lesson = new Lesson(null, new Lecturer("Тандилян Г."),
+                new Subject("Паттерны ООП"),
+                classRoomRepository.findByName("200"), lessonTypeRepository.findByName("Проработка"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("4"), lesson));
+
+        weekDayLessons.add(new WeekDayLesson(new WeekDay("Thursday", 4), hourLessons));
+        //endregion
+        hourLessons = new ArrayList<>();
+
+        //region Friday
+        lesson = new Lesson(null, new Lecturer("Маргарян В.Н."),
+                new Subject("СК МММ Качественная теория дифференциальных уравнений"),
+                classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Лекция"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
+        lesson = new Lesson(null, new Lecturer("Манукян М.Г."),
+                new Subject("База данных"),
+                classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Проработка"),
+                null, true, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
+        lesson = new Lesson(null, new Lecturer("Микилян М.А."),
+                new Subject("Уравнения математической физики"),
+                classRoomRepository.findByName("317"), lessonTypeRepository.findByName("Проработка"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
+        lesson = new Lesson(null, new Lecturer("Манукян М.Г."),
+                new Subject("База данных"),
+                classRoomRepository.findByName("300"), lessonTypeRepository.findByName("Лекция"),
+                null, false, true);
+        hourLessons.add(new HourLesson(hourRepository.findByName("4"), lesson));
+
+        weekDayLessons.add(new WeekDayLesson(new WeekDay("Friday", 5), hourLessons));
+        //endregion
+
+        schedule.setWeekDayLessons(weekDayLessons);
         scheduleRepository.save(schedule);
-        lesson.setNextWeekLesson(lesson);
-        lessonRepository.save(lesson);
-        scheduleRepository.save(schedule);
+    }
+
+    private void createHours() {
+        hourRepository.save(new Hour("1"));
+        hourRepository.save(new Hour("2"));
+        hourRepository.save(new Hour("3"));
+        hourRepository.save(new Hour("4"));
+        hourRepository.save(new Hour("5"));
     }
 
     private void createLessonTypes() {
@@ -163,10 +432,11 @@ public class BackendStarter implements CommandLineRunner {
     }
 
     private void createClassRooms() {
-        for (int i = 1; i < 450; i++) {
+        for (int i = 300; i < 329; i++) {
             classRoomRepository.save(new ClassRoom(i + ""));
         }
         classRoomRepository.save(new ClassRoom("Синий зал"));
+        classRoomRepository.save(new ClassRoom("200"));
         classRoomRepository.save(new ClassRoom("Дом Культуры Рау"));
     }
 }

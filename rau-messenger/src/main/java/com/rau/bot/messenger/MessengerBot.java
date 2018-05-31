@@ -44,7 +44,8 @@ public class MessengerBot {
 
     @Value("${messenger4j.pageAccessToken}")
     private String pageAccessToken;
-    @Value("backend.url")
+
+    @Value("${backend.url}")
     private String backendUrl;
 
     public MessengerBot(@Value("${messenger4j.appSecret}") final String appSecret,
@@ -53,18 +54,18 @@ public class MessengerBot {
         this.messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
         messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
 
-        final PostbackCallToAction callToActionAA = PostbackCallToAction.create("Now", "NOW");
+        final PostbackCallToAction callToActionAA = PostbackCallToAction.create("Next Lesson", "NEXT");
         final PostbackCallToAction callToActionAB = PostbackCallToAction.create("Today", "TODAY");
         final PostbackCallToAction callToActionAC = PostbackCallToAction.create("This week", "THIS_WEEK");
         final NestedCallToAction callToActionForSchedule = NestedCallToAction.create("\uD83D\uDDD3️ Schedule",
                 Arrays.asList(callToActionAA, callToActionAB, callToActionAC));
 
 
-        final PostbackCallToAction callToActionAA1 = PostbackCallToAction.create("⏭️ Next", "NEXT_MODULE");
-        final PostbackCallToAction callToActionAC1 = PostbackCallToAction.create("☠️ All upcoming", "ALL_MODULES");
+        final PostbackCallToAction callToActionAA1 = PostbackCallToAction.create("⏭️ Next Module", "NEXT_MODULE");
+        final PostbackCallToAction callToActionAC1 = PostbackCallToAction.create("☠️ All upcoming Modules", "ALL_MODULES");
 
-        final PostbackCallToAction callToActionAA2 = PostbackCallToAction.create("⏭️ Next", "NEXT_EXAM");
-        final PostbackCallToAction callToActionAC2 = PostbackCallToAction.create("☠️ All upcoming", "ALL_EXAMS");
+        final PostbackCallToAction callToActionAA2 = PostbackCallToAction.create("⏭️ Next Exam", "NEXT_EXAM");
+        final PostbackCallToAction callToActionAC2 = PostbackCallToAction.create("☠️ All upcoming Exams", "ALL_EXAMS");
 
         final NestedCallToAction callToActionForModules = NestedCallToAction.create("\uD83D\uDD14 Modules",
                 Arrays.asList(callToActionAA1, callToActionAC1));
@@ -185,14 +186,15 @@ public class MessengerBot {
 
         if (payloadOpt.isPresent()) {
             switch (payloadOpt.get()) {
+                case "NEXT":
                 case "NOW":
-                    urlStr = "/schedule/now";
+                    urlStr = "/messenger/schedule/next";
                     break;
                 case "TODAY":
-                    urlStr = "/schedule/today";
+                    urlStr = "/messenger/schedule/today";
                     break;
                 case "THIS_WEEK":
-                    urlStr = "/schedule/this/week";
+                    urlStr = "/messenger/schedule/all/week";
                     break;
                 case "NEXT_MODULE":
                     urlStr = "/module/next";
@@ -207,6 +209,7 @@ public class MessengerBot {
                     urlStr = "/exam/all";
                     break;
                 case "REGISTER":
+                default:
                     return;
             }
             RestTemplate restTemplate = new RestTemplate();
@@ -214,11 +217,10 @@ public class MessengerBot {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(backendUrl + urlStr)
-                    .queryParam("userId", event.senderId());
+            UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(backendUrl + urlStr);
 
 
-            HttpEntity<?> entity = new HttpEntity<>(headers);
+            HttpEntity<?> entity = new HttpEntity<>(event.senderId(), headers);
 
 
             restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class);

@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface HourRepository extends Neo4jRepository<Hour, Long> {
     List<Hour> findAll();
+
+    Hour findByName(String name);
 }

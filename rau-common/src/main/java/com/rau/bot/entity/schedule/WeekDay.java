@@ -21,7 +21,10 @@ public class WeekDay {
 
     private String name;
 
-    public WeekDay(String name) {
+    private Integer number;
+
+    public WeekDay(String name, int number) {
         this.name = name;
+        this.number = number;
     }
 }

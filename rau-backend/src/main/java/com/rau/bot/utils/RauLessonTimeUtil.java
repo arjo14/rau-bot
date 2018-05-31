@@ -1,4 +1,4 @@
-package com.rau.bot.util;
+package com.rau.bot.utils;
 
 public class RauLessonTimeUtil {
     public static String getTimeByHourLesson(String hour) {

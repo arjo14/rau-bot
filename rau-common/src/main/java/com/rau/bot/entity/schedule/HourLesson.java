@@ -20,7 +20,7 @@ public class HourLesson {
     @GeneratedValue
     private Long id;
 
-    @Relationship(type = "HAS_HOURS")
+    @Relationship(type = "HAS_HOUR")
     private Hour hour;
 
     @Relationship(type = "HAS_LESSON")
@@ -29,5 +29,10 @@ public class HourLesson {
     public HourLesson(Hour hour, Lesson lesson) {
         this.hour = hour;
         this.lesson = lesson;
+    }
+
+    @Override
+    public String toString() {
+        return hour.getName() + ") " + lesson;
     }
 }

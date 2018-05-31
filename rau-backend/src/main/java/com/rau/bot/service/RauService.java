@@ -2,12 +2,14 @@ package com.rau.bot.service;
 
 import com.rau.bot.entity.schedule.*;
 import com.rau.bot.entity.user.*;
+import com.rau.bot.repository.exam.ExamScheduleRepository;
+import com.rau.bot.repository.exam.ModuleScheduleRepository;
 import com.rau.bot.repository.schedule.*;
 import com.rau.bot.repository.user.CourseRepository;
 import com.rau.bot.repository.user.DepartmentRepository;
 import com.rau.bot.repository.user.FacultyRepository;
 import com.rau.bot.repository.user.UserRepository;
-import com.rau.bot.util.RauLessonTimeUtil;
+import com.rau.bot.utils.RauLessonTimeUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -19,9 +21,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,17 +42,19 @@ public class RauService {
     private final LessonTypeRepository lessonTypeRepository;
     private final ScheduleRepository scheduleRepository;
     private final LessonRepository lessonRepository;
+    private final ModuleScheduleRepository moduleScheduleRepository;
+    private final ExamScheduleRepository examScheduleRepository;
 
-    private final int width;
+    private final MessengerService messengerService;
 
-    @Value("${messenger.url}")
-    private String messengerUrl;
+    private final int scheduleWidth;
 
 
     public RauService(UserRepository userRepository, DepartmentRepository departmentRepository, CourseRepository courseRepository,
                       FacultyRepository facultyRepository, LecturerRepository lecturerRepository, SubjectRepository subjectRepository,
                       ClassRoomRepository classRoomRepository, WeekDayRepository weekDayRepository, LessonTypeRepository lessonTypeRepository,
-                      ScheduleRepository scheduleRepository, LessonRepository lessonRepository) {
+                      ScheduleRepository scheduleRepository, LessonRepository lessonRepository, ModuleScheduleRepository moduleScheduleRepository,
+                      ExamScheduleRepository examScheduleRepository, MessengerService messengerService) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
         this.courseRepository = courseRepository;
@@ -60,7 +66,10 @@ public class RauService {
         this.lessonTypeRepository = lessonTypeRepository;
         this.scheduleRepository = scheduleRepository;
         this.lessonRepository = lessonRepository;
-        width = 4;
+        this.moduleScheduleRepository = moduleScheduleRepository;
+        this.examScheduleRepository = examScheduleRepository;
+        this.messengerService = messengerService;
+        scheduleWidth = 4;
     }
 
     //region nerveris azdox methodner
@@ -123,16 +132,21 @@ public class RauService {
         Boolean armenianSector = user.getArmenianSector();
 
         List<Schedule> schedules = scheduleRepository.findAllByArmenianSectorEqualsAndFromFirstPartEquals(armenianSector, fromFirstPart);
-        Schedule schedule1 = schedules.stream().filter(schedule -> schedule.getCourse().equals(course) && schedule.getFaculty().equals(faculty)
+        List<Schedule> scheduleList = schedules.stream().filter(schedule -> schedule.getCourse().equals(course) && schedule.getFaculty().equals(faculty)
                 && schedule.getGroup().equals(group))
-                .collect(Collectors.toList()).get(0);
-        return scheduleRepository.findById(schedule1.getId(), width).get();
+                .collect(Collectors.toList());
+        if(scheduleList.isEmpty()){
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(),"Can't find Schedule for you");
+            throw new IllegalArgumentException("Can't find Schedule for this user");
+        }
+        else{
+            return scheduleRepository.findById(scheduleList.get(0).getId(), scheduleWidth).get();
+        }
     }
 
 
     public String test() {
         System.out.println();
-        sendAllScheduleToUser(userRepository.findAll().get(0));
         return "test";
     }
 
@@ -149,14 +163,17 @@ public class RauService {
 
         StringBuilder text = new StringBuilder();
 
+        schedule.getWeekDayLessons().sort(Comparator.comparing(o2 -> o2.getWeekDay().getNumber()));
         for (WeekDayLesson weekDayLesson : schedule.getWeekDayLessons()) {
             text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
+            weekDayLesson.getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
             for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
-                text.append(hourLesson.getHour().getName()).append(" : ").append(hourLesson.getLesson()).append("\n");
+                text.append(hourLesson.getHour()).append(RauLessonTimeUtil.getTimeByHourLesson(hourLesson.getHour().getName())).append("\n").append(hourLesson.getLesson()).append("\n\n");
             }
+            text.append("______________________\n\n");
         }
         System.out.println(text);
-        sendTextMessageToMessengerUser(user.getUserId(), text.toString());
+        messengerService.sendTextMessageToMessengerUser(user.getUserId(), text.substring(0, text.length() - 24));
 
     }
 
@@ -165,29 +182,53 @@ public class RauService {
         StringBuilder endText = new StringBuilder("Your next lesson is ");
 
         LocalDateTime localDateTime = LocalDateTime.now();
-        LocalDateTime newLocalDateTime;
         int hour = localDateTime.getHour();
         int minute = localDateTime.getMinute();
         List<HourLesson> hourLessons = new ArrayList<>();
 
         if (DayOfWeek.SUNDAY.equals(localDateTime.getDayOfWeek()) || hour > 18 || hour == 18 && minute > 15) {
-            newLocalDateTime = localDateTime.plusDays(1);
 
-            sendScheduleInfoToUser("1", newLocalDateTime, schedule, user.getUserId(), endText);
+            WeekDayLesson wd = getNextLesson(schedule, localDateTime);
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+                    + wd.getWeekDay().getName()
+                    + ":\n "
+                    + wd.getHourLessons().get(0).getHour()
+                    + wd.getHourLessons().get(0).getLesson());
 
-        } else if (hour < 9) {
-            sendScheduleInfoToUser("1", localDateTime, schedule, user.getUserId(), endText);
+        } else if (hour < 9 || hour == 9 && minute < 30) {
+
+            WeekDayLesson wd = getNextLesson(schedule, localDateTime.minusDays(1));
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+                    + wd.getWeekDay().getName()
+                    + ", "
+                    + wd.getHourLessons().get(0));
 
         } else {
             int currentLessonHour = getLessonHourByHourAndMinute(hour, minute);
-            if (currentLessonHour < 0) {
-                sendScheduleInfoToUser(String.valueOf(currentLessonHour * (-1)), localDateTime, schedule, user.getUserId(), endText);
-            } else if (currentLessonHour == 5) {
-                sendScheduleInfoToUser("5", localDateTime, schedule, user.getUserId(), new StringBuilder("Your current lesson is"));
+            if (currentLessonHour == 5) {
+                boolean[] has5thHourLesson = {false};
+                schedule.getWeekDayLessons().forEach(wdl -> {
+                    if (wdl.getWeekDay().getName().equals(localDateTime.getDayOfWeek().name())) {
+                        wdl.getHourLessons().forEach(hourLesson -> {
+                            if (hourLesson.getHour().getName().equals("5")) {
+                                messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your current lesson is :\n"
+                                        + localDateTime.getDayOfWeek().name() + ", " + hourLesson);
+                                has5thHourLesson[0] = true;
+                            }
+                        });
+                    }
+                });
+                if (!has5thHourLesson[0]) {
+                    WeekDayLesson weekDayLesson = getNextLesson(schedule, localDateTime);
+                    messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+                            + weekDayLesson.getWeekDay().getName()
+                            + ", "
+                            + weekDayLesson.getHourLessons().get(0));
+                }
             } else {
                 schedule.getWeekDayLessons()
                         .stream()
-                        .filter(weekDayLesson -> localDateTime.getDayOfWeek().name().equals(weekDayLesson.getWeekDay().getName().toLowerCase()))
+                        .filter(weekDayLesson -> localDateTime.getDayOfWeek().name().toLowerCase().equals(weekDayLesson.getWeekDay().getName().toLowerCase()))
                         .forEach(weekDayLesson -> weekDayLesson.getHourLessons()
                                 .stream()
                                 .filter(hourLesson -> (String.valueOf(currentLessonHour)).equals(hourLesson.getHour().getName()) ||
@@ -196,24 +237,80 @@ public class RauService {
 
                 hourLessons.sort(Comparator.comparing(o -> o.getHour().getName()));
 
-                StringBuilder text = new StringBuilder("Current Lesson is ");
-                sendTextMessageToMessengerUser(user.getUserId(),
-                        text.append(hourLessons.get(0).getHour())
-                                .append(" lesson (")
-                                .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
-                                .append("): ")
-                                .append(hourLessons.get(0).getLesson().toString())
-                                .append("\n")
-                                .append("Next lesson is ")
-                                .append(hourLessons.get(1).getHour())
-                                .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
-                                .append("): ")
-                                .append(hourLessons.get(1).getLesson().toString())
-                                .toString());
+                StringBuilder text = new StringBuilder("Your Current Lesson is \n");
+                if (hourLessons.size() > 1) {
+                    messengerService.sendTextMessageToMessengerUser(user.getUserId(),
+                            text.append(hourLessons.get(0).getHour())
+                                    .append(" ")
+                                    .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
+                                    .append("\n")
+                                    .append(hourLessons.get(0).getLesson())
+                                    .append("\n\n")
+                                    .append("Next lesson is \n")
+                                    .append(hourLessons.get(1).getHour())
+                                    .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
+                                    .append("\n")
+                                    .append(hourLessons.get(1).getLesson())
+                                    .toString());
+                } else if (hourLessons.size() == 1) {
+                    messengerService.sendTextMessageToMessengerUser(user.getUserId(),
+                            text.append(hourLessons.get(0).getHour())
+                                    .append(" ")
+                                    .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
+                                    .append("\n")
+                                    .append(hourLessons.get(0).getLesson()).toString());
+                } else {
+                    WeekDayLesson nextLesson = getNextLesson(schedule, localDateTime);
+
+                    messengerService.sendTextMessageToMessengerUser(user.getUserId(),
+                            "You don't have a lesson now. Your next lesson is :\n" +
+                                    nextLesson.getWeekDay().getName() + ", " +
+                                    nextLesson.getHourLessons().get(0));
+                }
             }
 
         }
 
+    }
+
+    private WeekDayLesson getNextLesson(Schedule schedule, LocalDateTime localDateTime) {
+        WeekDayLesson nextLesson = new WeekDayLesson();
+        for (int i = 0; i < 7; i++) {
+            localDateTime = localDateTime.plusDays(1);
+            LocalDateTime finalNewLocalDateTime = localDateTime;
+            List<WeekDayLesson> collect = schedule.getWeekDayLessons()
+                    .stream()
+                    .filter(weekDayLesson -> finalNewLocalDateTime.getDayOfWeek().name().toLowerCase().equals(weekDayLesson.getWeekDay().getName().toLowerCase())).collect(Collectors.toList());
+
+            if (!collect.isEmpty() && !collect.get(0).getHourLessons().isEmpty()) {
+                collect.get(0).getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
+                nextLesson.setWeekDay(new WeekDay(collect.get(0).getWeekDay().getName(), getWeekDayNumberByName(collect.get(0).getWeekDay().getName())));
+                nextLesson.setHourLessons(collect.get(0).getHourLessons());
+                return nextLesson;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
+
+    private int getWeekDayNumberByName(String name) {
+        switch (name.toLowerCase()) {
+            case "monday":
+                return 1;
+            case "tuesday":
+                return 2;
+            case "wednesday":
+                return 3;
+            case "thursday":
+                return 4;
+            case "friday":
+                return 5;
+            default:
+                return 6;
+        }
+    }
+
+    private boolean isEvenWeek(LocalDateTime localDateTime) {
+        return localDateTime.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear()) % 2 == 0;
     }
 
     public void sendTodaysScheduleToUser(User user) {
@@ -234,34 +331,30 @@ public class RauService {
         Schedule schedule = getScheduleForUser(user);
         List<WeekDayLesson> weekDayLessons = schedule.getWeekDayLessons()
                 .stream()
-                .filter(weekDayLesson1 -> weekDayLesson1.getWeekDay().getName().equals(localDateTime.getDayOfWeek().name()))
+                .filter(weekDayLesson1 -> weekDayLesson1.getWeekDay().getName().toLowerCase().equals(localDateTime.getDayOfWeek().name().toLowerCase()))
                 .collect(Collectors.toList());
 
-        for (WeekDayLesson weekDayLesson : weekDayLessons) {
-            text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
-            for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
-                text.append(hourLesson.getHour().getName()).append(" : ").append(hourLesson.getLesson()).append("\n");
+        if (weekDayLessons.isEmpty()) {
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "It's so good man, you don't have a lesson today !");
+        } else {
+            weekDayLessons.sort(Comparator.comparing(o2 -> o2.getWeekDay().getNumber()));
+            for (WeekDayLesson weekDayLesson : weekDayLessons) {
+                text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
+                weekDayLesson.getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
+                for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
+                    text.append(hourLesson.getHour().getName())
+                            .append(") ")
+                            .append(RauLessonTimeUtil.getTimeByHourLesson(hourLesson.getHour().getName()))
+                            .append(" : \n")
+                            .append(hourLesson.getLesson())
+                            .append("\n")
+                            .append("\n");
+                }
             }
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), text.toString());
         }
-        sendTextMessageToMessengerUser(user.getUserId(), text.toString());
     }
 
-    private void sendTextMessageToMessengerUser(String userId, String text) {
-        RestTemplate restTemplate = new RestTemplate();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(messengerUrl + "/callback/send/text")
-                .queryParam("userId", userId)
-                .queryParam("text", text);
-
-
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-
-
-        restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class);
-    }
 
     private void sendScheduleInfoToUser(String lessonHour, LocalDateTime localDateTime, Schedule schedule, String userId, StringBuilder endText) {
         List<HourLesson> list = new ArrayList<>();
@@ -272,7 +365,7 @@ public class RauService {
                         .stream()
                         .filter(hourLesson -> String.valueOf(hourLesson.getHour().getName()).equals(hourLesson))
                         .forEach(list::add));
-        sendTextMessageToMessengerUser(userId,
+        messengerService.sendTextMessageToMessengerUser(userId,
                 endText.append(list.get(0).getHour())
                         .append(" lesson (")
                         .append(RauLessonTimeUtil.getTimeByHourLesson(lessonHour))
@@ -282,47 +375,46 @@ public class RauService {
 
     private int getLessonHourByHourAndMinute(int hour, int minute) {
         if (hour < 11) {
-            if (minute < 35) {
+            if (minute < 35 || hour == 9) {
                 return 1;
-            } else if (minute < 45) {
-                return -1;
             } else {
                 return 2;
             }
         } else if (hour < 13) {
-            if (minute < 20) {
+            if (minute < 20 || hour == 11) {
                 return 2;
-            } else if (minute < 50) {
-                return -2;
             } else {
                 return 3;
             }
         } else if (hour < 15) {
-            if (minute < 25) {
+            if (minute < 25 || hour == 13) {
                 return 3;
-            } else if (minute < 35) {
-                return -3;
             } else {
                 return 4;
             }
         } else if (hour < 17) {
-            if (minute < 10) {
+            if (minute < 10 || hour == 15) {
                 return 4;
-            } else if (minute < 40) {
-                return -4;
             } else {
                 return 5;
             }
-        } else {
-            throw new IllegalArgumentException();
+        } else if (hour < 19) {
+            if (minute < 15 || hour == 17) {
+                return 5;
+            }
         }
+        throw new IllegalArgumentException();
+
     }
 
     public void sendUserNotRegistered(String userId) {
-        sendTextMessageToMessengerUser(userId, "Sorry! You are not registered!!\nWhat are you doing here without registration?????");
+        messengerService.sendTextMessageToMessengerUser(userId, "Sorry! You are not registered!!\nWhat are you doing here without registration?????");
     }
 
     public User getUserByUserId(String userId) {
-        return userRepository.findByUserIdEquals(userId);
+        User user = userRepository.findAll().get(0);
+        user.setUserId(userId);
+        userRepository.save(user);
+        return user;
     }
 }
