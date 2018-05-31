@@ -86,21 +86,65 @@ public class BackendStarter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-//        createDepartments();
-//        createFaculties();
-//        createGroups();
-//        createLecturers();
-//        createSubjects();
+        userRepository.deleteAll();
+        createLessonTypes();
+        createHours();
+        createClassRooms();
+        createDepartments();
+        createFaculties();
+        createGroups();
+        createLecturers();
+        createSubjects();
 
 
-//        createMyModules();
-//        createMyExams();
-//        createMyGroupSchedule();
+        createMyGroupSchedule();
+        createMyModules();
+        createMyExams();
+
+
+    }
+
+    private void createSubjects() {
+        subjectRepository.deleteAll();
+        subjectRepository.save(new Subject("Уравнения математической физики"));
+        subjectRepository.save(new Subject("База Данных"));
+        subjectRepository.save(new Subject("Теория вер. и мат статистика"));
+        subjectRepository.save(new Subject("Языки программирования и методы трансляции"));
+        subjectRepository.save(new Subject("Физика"));
+        subjectRepository.save(new Subject("Функц. анализ"));
+        subjectRepository.save(new Subject("Яз. и мет. прог. (Java)"));
+        subjectRepository.save(new Subject("Концепции современного естествознания"));
+        subjectRepository.save(new Subject("Численные методы"));
+        subjectRepository.save(new Subject("СК МК Комбинаторная интегральная геометрия"));
+        subjectRepository.save(new Subject("Паттерны ООП"));
+        subjectRepository.save(new Subject("СК МММ Качественная теория дифференциальных уравнений"));
+        subjectRepository.save(new Subject("Курсовая работа"));
+    }
+
+    private void createLecturers() {
+        lecturerRepository.deleteAll();
+        lecturerRepository.save(new Lecturer("Карапетян Г.А."));
+        lecturerRepository.save(new Lecturer("Арамян Р.Г."));
+        lecturerRepository.save(new Lecturer("Манукян М.Г."));
+        lecturerRepository.save(new Lecturer("Беджанян А.Р."));
+        lecturerRepository.save(new Lecturer("Ваградян В.Г."));
+        lecturerRepository.save(new Lecturer("Атаян"));
+        lecturerRepository.save(new Lecturer("Маилян С.С."));
+        lecturerRepository.save(new Lecturer("Аветисян П.С."));
+        lecturerRepository.save(new Lecturer("Мартиросян А."));
+        lecturerRepository.save(new Lecturer("Оганезова Г.Г."));
+        lecturerRepository.save(new Lecturer("Нигиян С.А."));
+        lecturerRepository.save(new Lecturer("Акопян Ю.Р."));
+        lecturerRepository.save(new Lecturer("Амбарцумян"));
+        lecturerRepository.save(new Lecturer("Тандилян Г."));
+        lecturerRepository.save(new Lecturer("Маргарян В.Н."));
+        lecturerRepository.save(new Lecturer("Микилян М.А."));
 
 
     }
 
     private void createGroups() {
+        groupRepository.deleteAll();
         groupRepository.save(new Group("501"));
         groupRepository.save(new Group("502"));
         groupRepository.save(new Group("503"));
@@ -108,10 +152,12 @@ public class BackendStarter implements CommandLineRunner {
     }
 
     private void createFaculties() {
+        facultyRepository.deleteAll();
         facultyRepository.save(new Faculty("ПМИ", departmentRepository.findByName("ИМВТ")));
     }
 
     private void createDepartments() {
+        departmentRepository.deleteAll();
         departmentRepository.save(new Department("ИМВТ"));
     }
 
@@ -133,23 +179,23 @@ public class BackendStarter implements CommandLineRunner {
 
         List<Exam> examList = new ArrayList<>();
 
-        Exam exam = new Exam(null, Collections.singletonList(new Lecturer("Карапетян Г.А.")),
-                new Subject("Уравнения математической физики"), classRoomRepository.findByName("305"),
+        Exam exam = new Exam(null, Collections.singletonList(lecturerRepository.findByName("Карапетян Г.А.")),
+                subjectRepository.findByName("Уравнения математической физики"), classRoomRepository.findByName("305"),
                 "09:00", dateFormatter.parse("30.06.2018"));
         examList.add(exam);
 
-        exam = new Exam(null, Collections.singletonList(new Lecturer("Манукян М.Г.")),
-                new Subject("База данных"), classRoomRepository.findByName("305"),
+        exam = new Exam(null, Collections.singletonList(lecturerRepository.findByName("Манукян М.Г.")),
+                subjectRepository.findByName("База Данных"), classRoomRepository.findByName("305"),
                 "09:00", dateFormatter.parse("16.06.2018"));
         examList.add(exam);
 
-        exam = new Exam(null, Arrays.asList(new Lecturer("Ваградян В.Г."), new Lecturer("Беджанян А.Р.")),
-                new Subject("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
+        exam = new Exam(null, Arrays.asList(lecturerRepository.findByName("Ваградян В.Г."), lecturerRepository.findByName("Беджанян А.Р.")),
+                subjectRepository.findByName("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
                 "09:00", dateFormatter.parse("20.06.2018"));
         examList.add(exam);
 
-        exam = new Exam(null, Collections.singletonList(new Lecturer("Арамян Р.Г.")),
-                new Subject("Теория вер. и мат статистика"), classRoomRepository.findByName("305"),
+        exam = new Exam(null, Collections.singletonList(lecturerRepository.findByName("Арамян Р.Г.")),
+                subjectRepository.findByName("Теория вер. и мат статистика"), classRoomRepository.findByName("305"),
                 "09:00", dateFormatter.parse("11.06.2018"));
         examList.add(exam);
 
@@ -173,30 +219,30 @@ public class BackendStarter implements CommandLineRunner {
 
         List<Module> moduleList = new ArrayList<>();
 
-        Module module = new Module(null, Collections.singletonList(new Lecturer("Карапетян Г.А.")),
-                new Subject("Уравнения математической физики"), classRoomRepository.findByName("301"),
+        Module module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Карапетян Г.А.")),
+                subjectRepository.findByName("Уравнения математической физики"), classRoomRepository.findByName("301"),
                 "12:50", dateFormatter.parse("06.06.2018"));
         moduleList.add(module);
 
 
-        module = new Module(null, Collections.singletonList(new Lecturer("Манукян М.Г.")),
-                new Subject("База Данных"), classRoomRepository.findByName("300"),
+        module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Манукян М.Г.")),
+                subjectRepository.findByName("База Данных"), classRoomRepository.findByName("300"),
                 "14:35", dateFormatter.parse("01.06.2018"));
         moduleList.add(module);
 
 
-        module = new Module(null, Arrays.asList(new Lecturer("Арамян Р.Г.")),
-                new Subject("Теория вер. и мат статистика"), classRoomRepository.findByName("313"),
+        module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Арамян Р.Г.")),
+                subjectRepository.findByName("Теория вер. и мат статистика"), classRoomRepository.findByName("313"),
                 "10:45", dateFormatter.parse("04.06.2018"));
         moduleList.add(module);
 
-        module = new Module(null, Arrays.asList(new Lecturer("Ваградян В.Г."), new Lecturer("Беджанян А.Р.")),
-                new Subject("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
+        module = new Module(null, Arrays.asList(lecturerRepository.findByName("Ваградян В.Г."), lecturerRepository.findByName("Беджанян А.Р.")),
+                subjectRepository.findByName("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
                 "10:45", dateFormatter.parse("07.06.2018"));
         moduleList.add(module);
 
-        module = new Module(null, Collections.singletonList(new Lecturer("Карапетян Г.А.")),
-                new Subject("Курсовая работа"), classRoomRepository.findByName("300"),
+        module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Карапетян Г.А.")),
+                subjectRepository.findByName("Курсовая работа"), classRoomRepository.findByName("300"),
                 "09:00", dateFormatter.parse("08.06.2018"));
         moduleList.add(module);
 
@@ -206,34 +252,14 @@ public class BackendStarter implements CommandLineRunner {
     }
 
     private void createMyGroupSchedule() {
-
-        //region drop database
-        userRepository.deleteAll();
-        courseRepository.deleteAll();
-        departmentRepository.deleteAll();
-        facultyRepository.deleteAll();
         groupRepository.deleteAll();
-
-
-        classRoomRepository.deleteAll();
-        lecturerRepository.deleteAll();
         scheduleRepository.deleteAll();
-        lessonTypeRepository.deleteAll();
-        subjectRepository.deleteAll();
-        weekDayRepository.deleteAll();
-        lessonRepository.deleteAll();
-        weekDayRepository.deleteAll();
         weekDayLessonRepository.deleteAll();
+        weekDayRepository.deleteAll();
         hourLessonRepository.deleteAll();
-        hourRepository.deleteAll();
+
+
         //endregion
-
-        // creating class rooms
-        createClassRooms();
-
-        //creating lesson types
-        createLessonTypes();
-        createHours();
 
         String courseName = "3";
         Course course = courseRepository.findByName(courseName);
@@ -266,13 +292,6 @@ public class BackendStarter implements CommandLineRunner {
         user.setFromFirstPart(true);
         userRepository.save(user);
 
-
-        String classRoomName = "300";
-        ClassRoom classRoom = classRoomRepository.findByName(classRoomName);
-        if (classRoom == null) {
-            classRoom = new ClassRoom(classRoomName);
-        }
-
         course = courseRepository.findByName(course.getName());
         faculty = facultyRepository.findByName(faculty.getName());
         group = groupRepository.findByName(group.getName());
@@ -288,23 +307,23 @@ public class BackendStarter implements CommandLineRunner {
         List<HourLesson> hourLessons = new ArrayList<>();
 
         //region Monday
-        Lesson lesson = new Lesson(null, new Lecturer("Карапетян Г.А."),
-                new Subject("Уравнения математической физики"),
+        Lesson lesson = new Lesson(null, lecturerRepository.findByName("Карапетян Г.А."),
+                subjectRepository.findByName("Уравнения математической физики"),
                 classRoomRepository.findByName("301"), lessonTypeRepository.findByName("Лекция"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
-        lesson = new Lesson(null, new Lecturer("Арамян Р.Г."),
-                new Subject("Теория вер. и мат. статистика"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Арамян Р.Г."),
+                subjectRepository.findByName("Теория вер. и мат статистика"),
                 classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Проработка"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
-        lesson = new Lesson(null, new Lecturer("Атаян"),
-                new Subject("Физика"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Атаян"),
+                subjectRepository.findByName("Физика"),
                 classRoomRepository.findByName("317"), lessonTypeRepository.findByName("Проработка"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
-        lesson = new Lesson(null, new Lecturer("Маилян С.С."),
-                new Subject("Физика"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Маилян С.С."),
+                subjectRepository.findByName("Физика"),
                 classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Лекция"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("4"), lesson));
@@ -315,20 +334,20 @@ public class BackendStarter implements CommandLineRunner {
         hourLessons = new ArrayList<>();
 
         //region Tuesday
-        lesson = new Lesson(null, new Lecturer("Арамян Р.Г."),
-                new Subject("Теория вер. и мат. статистика"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Арамян Р.Г."),
+                subjectRepository.findByName("Теория вер. и мат статистика"),
                 classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Лекция"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
 
-        lesson = new Lesson(null, new Lecturer("Аветисян П.С."),
-                new Subject("Функц. анализ"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Аветисян П.С."),
+                subjectRepository.findByName("Функц. анализ"),
                 classRoomRepository.findByName("309"), lessonTypeRepository.findByName("Лекция"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
 
-        lesson = new Lesson(null, new Lecturer("Атаян"),
-                new Subject("Яз. и мет. прог. (Java)"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Мартиросян А."),
+                subjectRepository.findByName("Яз. и мет. прог. (Java)"),
                 classRoomRepository.findByName("200"), lessonTypeRepository.findByName("Проработка"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
@@ -338,23 +357,23 @@ public class BackendStarter implements CommandLineRunner {
         hourLessons = new ArrayList<>();
 
         //region Wednesday
-        lesson = new Lesson(null, new Lecturer("Оганезова Г.Г."),
-                new Subject("Концепции современного естествознания"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Оганезова Г.Г."),
+                subjectRepository.findByName("Концепции современного естествознания"),
                 classRoomRepository.findByName("Синий зал"), lessonTypeRepository.findByName("Лекция"),
-                new Lesson(null, new Lecturer("Оганезова Г.Г."),
-                        new Subject("Концепции современного естествознания"),
+                new Lesson(null, lecturerRepository.findByName("Оганезова Г.Г."),
+                        subjectRepository.findByName("Концепции современного естествознания"),
                         classRoomRepository.findByName("305"), lessonTypeRepository.findByName("Проработка"),
                         null, false, false), false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
 
-        lesson = new Lesson(null, new Lecturer("Нигиян С.А."),
-                new Subject("Языки программирования и методы трансляции"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Нигиян С.А."),
+                subjectRepository.findByName("Языки программирования и методы трансляции"),
                 classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Проработка"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
 
-        lesson = new Lesson(null, new Lecturer("Карапетян Г.А."),
-                new Subject("Уравнения математической физики"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Карапетян Г.А."),
+                subjectRepository.findByName("Уравнения математической физики"),
                 classRoomRepository.findByName("301"), lessonTypeRepository.findByName("Лекция"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
@@ -364,23 +383,23 @@ public class BackendStarter implements CommandLineRunner {
         hourLessons = new ArrayList<>();
 
         //region Thursday
-        lesson = new Lesson(null, new Lecturer("Акопян Ю.Р."),
-                new Subject("Численные методы"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Акопян Ю.Р."),
+                subjectRepository.findByName("Численные методы"),
                 classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Лекция"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
-        lesson = new Lesson(null, new Lecturer("Беджанян А.Р."),
-                new Subject("Яз. прогр. и мет. трансляции"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Беджанян А.Р."),
+                subjectRepository.findByName("Языки программирования и методы трансляции"),
                 classRoomRepository.findByName("305"), lessonTypeRepository.findByName("Проработка"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
-        lesson = new Lesson(null, new Lecturer("Амбарцумян"),
-                new Subject("СК МК Комбинаторная интегральная геометрия"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Амбарцумян"),
+                subjectRepository.findByName("СК МК Комбинаторная интегральная геометрия"),
                 classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Проработка"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
-        lesson = new Lesson(null, new Lecturer("Тандилян Г."),
-                new Subject("Паттерны ООП"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Тандилян Г."),
+                subjectRepository.findByName("Паттерны ООП"),
                 classRoomRepository.findByName("200"), lessonTypeRepository.findByName("Проработка"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("4"), lesson));
@@ -390,23 +409,23 @@ public class BackendStarter implements CommandLineRunner {
         hourLessons = new ArrayList<>();
 
         //region Friday
-        lesson = new Lesson(null, new Lecturer("Маргарян В.Н."),
-                new Subject("СК МММ Качественная теория дифференциальных уравнений"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Маргарян В.Н."),
+                subjectRepository.findByName("СК МММ Качественная теория дифференциальных уравнений"),
                 classRoomRepository.findByName("321"), lessonTypeRepository.findByName("Лекция"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("1"), lesson));
-        lesson = new Lesson(null, new Lecturer("Манукян М.Г."),
-                new Subject("База данных"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Манукян М.Г."),
+                subjectRepository.findByName("База Данных"),
                 classRoomRepository.findByName("313"), lessonTypeRepository.findByName("Проработка"),
                 null, true, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("2"), lesson));
-        lesson = new Lesson(null, new Lecturer("Микилян М.А."),
-                new Subject("Уравнения математической физики"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Микилян М.А."),
+                subjectRepository.findByName("Уравнения математической физики"),
                 classRoomRepository.findByName("317"), lessonTypeRepository.findByName("Проработка"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("3"), lesson));
-        lesson = new Lesson(null, new Lecturer("Манукян М.Г."),
-                new Subject("База данных"),
+        lesson = new Lesson(null, lecturerRepository.findByName("Манукян М.Г."),
+                subjectRepository.findByName("База Данных"),
                 classRoomRepository.findByName("300"), lessonTypeRepository.findByName("Лекция"),
                 null, false, true);
         hourLessons.add(new HourLesson(hourRepository.findByName("4"), lesson));
@@ -419,6 +438,7 @@ public class BackendStarter implements CommandLineRunner {
     }
 
     private void createHours() {
+        hourRepository.deleteAll();
         hourRepository.save(new Hour("1"));
         hourRepository.save(new Hour("2"));
         hourRepository.save(new Hour("3"));
@@ -427,11 +447,13 @@ public class BackendStarter implements CommandLineRunner {
     }
 
     private void createLessonTypes() {
+        lessonTypeRepository.deleteAll();
         lessonTypeRepository.save(new LessonType("Лекция"));
         lessonTypeRepository.save(new LessonType("Проработка"));
     }
 
     private void createClassRooms() {
+        classRoomRepository.deleteAll();
         for (int i = 300; i < 329; i++) {
             classRoomRepository.save(new ClassRoom(i + ""));
         }

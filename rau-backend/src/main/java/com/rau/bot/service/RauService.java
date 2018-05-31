@@ -1,5 +1,7 @@
 package com.rau.bot.service;
 
+import com.rau.bot.dto.QuickReplyDto;
+import com.rau.bot.dto.QuickReplyResponseDto;
 import com.rau.bot.entity.schedule.*;
 import com.rau.bot.entity.user.*;
 import com.rau.bot.repository.exam.ExamScheduleRepository;
@@ -10,14 +12,7 @@ import com.rau.bot.repository.user.DepartmentRepository;
 import com.rau.bot.repository.user.FacultyRepository;
 import com.rau.bot.repository.user.UserRepository;
 import com.rau.bot.utils.RauLessonTimeUtil;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
@@ -135,11 +130,10 @@ public class RauService {
         List<Schedule> scheduleList = schedules.stream().filter(schedule -> schedule.getCourse().equals(course) && schedule.getFaculty().equals(faculty)
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());
-        if(scheduleList.isEmpty()){
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(),"Can't find Schedule for you");
+        if (scheduleList.isEmpty()) {
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find Schedule for you");
             throw new IllegalArgumentException("Can't find Schedule for this user");
-        }
-        else{
+        } else {
             return scheduleRepository.findById(scheduleList.get(0).getId(), scheduleWidth).get();
         }
     }
@@ -416,5 +410,78 @@ public class RauService {
         user.setUserId(userId);
         userRepository.save(user);
         return user;
+    }
+
+    public QuickReplyResponseDto getAllDepartments(Boolean fromArmenianSector) {
+        List<Department> departments = new ArrayList<>();
+        scheduleRepository.findAll(scheduleWidth)
+                .stream()
+                .filter(schedule -> schedule.getArmenianSector().equals(fromArmenianSector))
+                .forEach(schedule -> {
+                    if (!departments.contains(schedule.getFaculty().getDepartment())) {
+                        departments.add(schedule.getFaculty().getDepartment());
+                    }
+                });
+        List<QuickReplyDto> quickReplyDtos = new ArrayList<>();
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your department.", quickReplyDtos);
+        departments.forEach(department -> quickReplyDtos.add(new QuickReplyDto(department.getName(), department.getId().toString())));
+        return quickReplyResponseDto;
+    }
+
+    public List<Faculty> getFacultiesByDepartmentId(Boolean fromArmenianSector, String departmentId) {
+        List<Faculty> faculties = new ArrayList<>();
+        scheduleRepository.findAll(scheduleWidth)
+                .stream()
+                .filter(schedule -> schedule.getArmenianSector().equals(fromArmenianSector))
+                .forEach(schedule -> {
+                            if (!faculties.contains(schedule.getFaculty())) {
+                                faculties.add(schedule.getFaculty());
+                            }
+                        }
+                );
+        return facultyRepository.findAll()
+                .stream()
+                .filter(faculty -> faculty.getDepartment().getId().toString().equals(departmentId))
+                .collect(Collectors.toList());
+    }
+
+    public List<Course> getCoursesByFacultyId(Boolean fromArmenianSector, String facultyId) {
+        List<Course> courses = new ArrayList<>();
+        scheduleRepository.findAll(scheduleWidth)
+                .stream()
+                .filter((schedule -> schedule.getFaculty().getId().toString().equals(facultyId)
+                        && schedule.getArmenianSector().equals(fromArmenianSector)))
+                .forEach(schedule -> {
+                    if (!courses.contains(schedule.getCourse())) {
+                        courses.add(schedule.getCourse());
+                    }
+                });
+        return courses;
+    }
+
+    public List<Group> getGroupsByFacultyIdAndCourseId(Boolean fromArmenianSector, String facultyId, String courseId) {
+        List<Group> groups = new ArrayList<>();
+        scheduleRepository.findAll(scheduleWidth)
+                .stream()
+                .filter((schedule -> schedule.getFaculty().getId().toString().equals(facultyId)
+                        && schedule.getCourse().getId().toString().equals(courseId)
+                        && schedule.getArmenianSector().equals(fromArmenianSector)))
+                .forEach(schedule -> {
+                    if (!groups.contains(schedule.getGroup())) {
+                        groups.add(schedule.getGroup());
+                    }
+                });
+        return groups;
+    }
+
+    public Boolean checkIfGroupHasPartitions(Boolean fromArmenianSector, String facultyId, String courseId, String groupId) {
+        List<Schedule> list = scheduleRepository.findAll(scheduleWidth)
+                .stream()
+                .filter((schedule -> schedule.getFaculty().getId().toString().equals(facultyId)
+                        && schedule.getCourse().getId().toString().equals(courseId)
+                        && schedule.getGroup().getId().toString().equals(groupId)
+                        && schedule.getArmenianSector().equals(fromArmenianSector)))
+                .collect(Collectors.toList());
+        return list.size() > 1;
     }
 }

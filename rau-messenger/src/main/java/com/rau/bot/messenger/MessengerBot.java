@@ -19,11 +19,19 @@ import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.SenderActionPayload;
 import com.github.messenger4j.send.message.TextMessage;
+import com.github.messenger4j.send.message.quickreply.QuickReply;
+import com.github.messenger4j.send.message.quickreply.TextQuickReply;
 import com.github.messenger4j.send.senderaction.SenderAction;
 import com.github.messenger4j.webhook.event.AttachmentMessageEvent;
 import com.github.messenger4j.webhook.event.PostbackEvent;
 import com.github.messenger4j.webhook.event.QuickReplyMessageEvent;
 import com.github.messenger4j.webhook.event.TextMessageEvent;
+import com.rau.bot.dto.QuickReplyDto;
+import com.rau.bot.dto.QuickReplyResponseDto;
+import com.rau.bot.dto.UserStateDto;
+import com.rau.bot.entity.user.Department;
+import com.rau.bot.entity.user.User;
+import com.rau.bot.enums.UserState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -31,8 +39,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
@@ -47,6 +55,7 @@ public class MessengerBot {
 
     @Value("${backend.url}")
     private String backendUrl;
+    private Map<String, UserStateDto> stateMap;
 
     public MessengerBot(@Value("${messenger4j.appSecret}") final String appSecret,
                         @Value("${messenger4j.verifyToken}") final String verifyToken, @Value("${messenger4j.pageAccessToken}") final String pageAccessToken) throws MessengerApiException, MessengerIOException {
@@ -171,23 +180,57 @@ public class MessengerBot {
 
     private void newQuickReplyMessageEventHandler(QuickReplyMessageEvent event) {
         log.info("Received new Quick Reply event.");
+
+        String userId = event.senderId();
+        String payload = event.payload();
+        String text = event.payload().substring(2);
+
+        UserStateDto userStateDto = stateMap.get(userId);
+
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<?> entity = new HttpEntity<>(event.senderId(), headers);
+        UriComponentsBuilder builder;
+
+        switch (payload.substring(0, 1)) {
+            case "1":
+                user.setArmenianSector(text.equals("true"));
+
+
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/department")
+                        .queryParam("fromArmenianSector", user.getArmenianSector());
+                List<Department> departments = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, List.class).getBody();
+                for (Department department : departments) {
+
+                }
+                break;
+            case "2":
+
+
+            case "3":
+
+            case "4":
+
+            case "5":
+        }
+
+        List list = new ArrayList();
+
+
     }
 
-    private void newAttachmentMessageEventHandler(AttachmentMessageEvent event) {
-        log.info("Received new Attachment event.");
-    }
-
-    //region Unimportant methods
-
-    private void newPostbackEventHandler(PostbackEvent event) {
+    private void newPostbackEventHandler(PostbackEvent event) throws MessengerApiException, MessengerIOException {
         log.info("Received new Postback event.");
         Optional<String> payloadOpt = event.payload();
         String urlStr = "";
+        String userId = event.senderId();
 
         if (payloadOpt.isPresent()) {
             switch (payloadOpt.get()) {
                 case "NEXT":
-                case "NOW":
                     urlStr = "/messenger/schedule/next";
                     break;
                 case "TODAY":
@@ -209,6 +252,10 @@ public class MessengerBot {
                     urlStr = "/exam/all";
                     break;
                 case "REGISTER":
+                    if (stateMap.get(userId) == null) {
+                        stateMap.put(userId, new UserStateDto(new User(), UserState.ARMENIAN_SECTOR));
+                    }
+                    sendNextRegistrationStep(userId);
                 default:
                     return;
             }
@@ -220,11 +267,69 @@ public class MessengerBot {
             UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(backendUrl + urlStr);
 
 
-            HttpEntity<?> entity = new HttpEntity<>(event.senderId(), headers);
+            HttpEntity<?> entity = new HttpEntity<>(userId, headers);
 
 
             restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class);
         }
+    }
+
+    private void sendNextRegistrationStep(String userId) throws MessengerApiException, MessengerIOException {
+        UserStateDto userStateDto = stateMap.get(userId);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<?> entity = new HttpEntity<>(userId, headers);
+        UriComponentsBuilder builder;
+
+        switch (userStateDto.getUserState()) {
+            case ARMENIAN_SECTOR:
+                sendQuickRepliesToUser(userId, new QuickReplyResponseDto("Are you from armenian sector?",
+                        Arrays.asList(new QuickReplyDto("yes", "1_true"), new QuickReplyDto("no", "1_false"))), true);
+                userStateDto.setUserState(UserState.DEPARTMENT);
+                return;
+            case DEPARTMENT:
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/department")
+                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                userStateDto.setUserState(UserState.FACULTY);
+                break;
+            case FACULTY:
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
+                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                userStateDto.setUserState(UserState.COURSE);
+                break;
+            case COURSE:
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
+                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                userStateDto.setUserState(UserState.GROUP);
+                break;
+            case GROUP:
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
+                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                userStateDto.setUserState(UserState.PARTITION);
+                break;
+            case PARTITION:
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
+                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                userStateDto.setUserState(UserState.DEPARTMENT);
+                break;
+            default:
+                sendTextMessage(userId, "Something went wrong...");
+                return;
+        }
+
+
+        QuickReplyResponseDto quickReplyResponseDto = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, QuickReplyResponseDto.class).getBody();
+
+        sendQuickRepliesToUser(userId, quickReplyResponseDto, true);
+    }
+
+
+    //region Unimportant methods
+    private void newAttachmentMessageEventHandler(AttachmentMessageEvent event) {
+        log.info("Received new Attachment event.");
     }
 
     private void newReferralEventHandler() {
@@ -289,6 +394,25 @@ public class MessengerBot {
             messenger.send(messagePayload);
         }
         messenger.send(payloadForTypingOFF);
+    }
+
+    private void sendQuickRepliesToUser(String userId, QuickReplyResponseDto quickReplyResponseDto, boolean hasExtraButtons) throws MessengerApiException, MessengerIOException {
+        String text = quickReplyResponseDto.getText();
+        List<QuickReplyDto> quickReplyDtoList = quickReplyResponseDto.getQuickReplyDtoList();
+        if (hasExtraButtons) {
+            quickReplyDtoList.add(new QuickReplyDto("Back", "8"));
+            quickReplyDtoList.add(new QuickReplyDto("Cancel", "9"));
+        }
+
+        List<QuickReply> quickReplies = quickReplyDtoList.stream()
+                .map(quickReplyDto -> TextQuickReply.create(quickReplyDto.getText(), quickReplyDto.getPayload()))
+                .collect(Collectors.toList());
+
+        final TextMessage message = TextMessage.create(text, of(quickReplies), empty());
+        final MessagePayload payload = MessagePayload.create(userId, MessagingType.RESPONSE, message);
+
+        messenger.send(payload);
+
     }
 
 }
