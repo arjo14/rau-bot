@@ -1,4 +1,4 @@
-version: "3"
+version: "2"
 services:
   rau-backend:
     container_name: rau-backend
@@ -7,6 +7,7 @@ services:
     container_name: rau-messenger
     image: rau-messenger
   neo4j:
+    container_name: neo4j-rau
     image: neo4j:3.0
     ports:
      - "17474:7474"
