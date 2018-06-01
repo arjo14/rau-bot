@@ -31,6 +31,47 @@
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
-
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${io.fabric8.version}</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>${project.artifactId}</name>
+                            <alias>${project.artifactId}</alias>
+                            <build>
+                                <from>openjdk:8-jre-alpine</from>
+                                <assembly>
+                                    <descriptorRef>artifact-with-dependencies</descriptorRef>
+                                </assembly>
+                                <tags>
+                                    <tag>latest</tag>
+                                </tags>
+                                <cmd>java -jar /maven/${project.artifactId}.jar --spring.profiles.active=prod</cmd>
+                            </build>
+                            <run>
+                                <namingStrategy>alias</namingStrategy>
+                            </run>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

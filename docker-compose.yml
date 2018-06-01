@@ -1,0 +1,14 @@
+version: "3"
+services:
+  rau-backend:
+    container_name: rau-backend
+    image: rau-backend
+  rau-messenger:
+    container_name: rau-messenger
+    image: rau-messenger
+  neo4j:
+    image: neo4j:3.0
+    ports:
+     - "17474:7474"
+    volumes:
+     - ./db/dbms:/data/dbms
