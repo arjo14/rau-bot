@@ -23,12 +23,10 @@ public class UserController {
         return ResponseEntity.ok(rauService.saveUser(user));
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<QuickReplyResponseDto> getFaculties(@RequestParam("fromArmenianSector") Boolean fromArmenianSector) {
+    @GetMapping("/department")
+    public ResponseEntity<QuickReplyResponseDto> getDepartments(@RequestParam("fromArmenianSector") Boolean fromArmenianSector) {
         return ResponseEntity.ok(rauService.getAllDepartments(fromArmenianSector));
     }
-
-    //TODO change to QuickReplyResponseDto
 
     @GetMapping("/faculty/{departmentId}")
     public ResponseEntity<QuickReplyResponseDto> getFacultiesByDepartmentId(@RequestParam("fromArmenianSector") Boolean fromArmenianSector,
@@ -49,7 +47,7 @@ public class UserController {
         return ResponseEntity.ok(rauService.getGroupsByFacultyIdAndCourseId(fromArmenianSector, facultyId, courseId));
     }
 
-    @GetMapping("/group/hasPartitions/{facultyId}/{courseId}/{groupId}")
+    @GetMapping("/group/has/partitions/{facultyId}/{courseId}/{groupId}")
     public ResponseEntity<QuickReplyResponseDto> checkIfGroupHasPartitions(@RequestParam("fromArmenianSector") Boolean fromArmenianSector,
                                                              @PathVariable("facultyId") String facultyId,
                                                              @PathVariable("courseId") String courseId,

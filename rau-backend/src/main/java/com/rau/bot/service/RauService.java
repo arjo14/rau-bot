@@ -7,20 +7,14 @@ import com.rau.bot.entity.user.*;
 import com.rau.bot.repository.exam.ExamScheduleRepository;
 import com.rau.bot.repository.exam.ModuleScheduleRepository;
 import com.rau.bot.repository.schedule.*;
-import com.rau.bot.repository.user.CourseRepository;
-import com.rau.bot.repository.user.DepartmentRepository;
-import com.rau.bot.repository.user.FacultyRepository;
-import com.rau.bot.repository.user.UserRepository;
+import com.rau.bot.repository.user.*;
 import com.rau.bot.utils.RauLessonTimeUtil;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +33,7 @@ public class RauService {
     private final LessonRepository lessonRepository;
     private final ModuleScheduleRepository moduleScheduleRepository;
     private final ExamScheduleRepository examScheduleRepository;
+    private final GroupRepository groupRepository;
 
     private final MessengerService messengerService;
 
@@ -49,7 +44,7 @@ public class RauService {
                       FacultyRepository facultyRepository, LecturerRepository lecturerRepository, SubjectRepository subjectRepository,
                       ClassRoomRepository classRoomRepository, WeekDayRepository weekDayRepository, LessonTypeRepository lessonTypeRepository,
                       ScheduleRepository scheduleRepository, LessonRepository lessonRepository, ModuleScheduleRepository moduleScheduleRepository,
-                      ExamScheduleRepository examScheduleRepository, MessengerService messengerService) {
+                      ExamScheduleRepository examScheduleRepository, GroupRepository groupRepository, MessengerService messengerService) {
         this.userRepository = userRepository;
         this.departmentRepository = departmentRepository;
         this.courseRepository = courseRepository;
@@ -63,6 +58,7 @@ public class RauService {
         this.lessonRepository = lessonRepository;
         this.moduleScheduleRepository = moduleScheduleRepository;
         this.examScheduleRepository = examScheduleRepository;
+        this.groupRepository = groupRepository;
         this.messengerService = messengerService;
         scheduleWidth = 4;
     }
@@ -422,30 +418,32 @@ public class RauService {
                         departments.add(schedule.getFaculty().getDepartment());
                     }
                 });
-        List<QuickReplyDto> quickReplyDtos = new ArrayList<>();
+        List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
         QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your department.", quickReplyDtos);
         departments.forEach(department -> quickReplyDtos.add(new QuickReplyDto(department.getName(), department.getId().toString())));
         return quickReplyResponseDto;
     }
 
-    public List<Faculty> getFacultiesByDepartmentId(Boolean fromArmenianSector, String departmentId) {
+    public QuickReplyResponseDto getFacultiesByDepartmentId(Boolean fromArmenianSector, String departmentId) {
         List<Faculty> faculties = new ArrayList<>();
         scheduleRepository.findAll(scheduleWidth)
                 .stream()
-                .filter(schedule -> schedule.getArmenianSector().equals(fromArmenianSector))
+                .filter(schedule -> schedule.getArmenianSector().equals(fromArmenianSector)
+                        && schedule.getFaculty().getDepartment().getId().toString().equals(departmentId))
                 .forEach(schedule -> {
                             if (!faculties.contains(schedule.getFaculty())) {
                                 faculties.add(schedule.getFaculty());
                             }
                         }
                 );
-        return facultyRepository.findAll()
-                .stream()
-                .filter(faculty -> faculty.getDepartment().getId().toString().equals(departmentId))
-                .collect(Collectors.toList());
+        List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your Faculty.");
+        quickReplyResponseDto.setQuickReplyDtoList(quickReplyDtos);
+        faculties.forEach(faculty -> quickReplyDtos.add(new QuickReplyDto(faculty.getName(), faculty.getId().toString())));
+        return quickReplyResponseDto;
     }
 
-    public List<Course> getCoursesByFacultyId(Boolean fromArmenianSector, String facultyId) {
+    public QuickReplyResponseDto getCoursesByFacultyId(Boolean fromArmenianSector, String facultyId) {
         List<Course> courses = new ArrayList<>();
         scheduleRepository.findAll(scheduleWidth)
                 .stream()
@@ -456,10 +454,15 @@ public class RauService {
                         courses.add(schedule.getCourse());
                     }
                 });
-        return courses;
+        List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your Course.");
+        quickReplyResponseDto.setQuickReplyDtoList(quickReplyDtos);
+
+        courses.forEach(course -> quickReplyDtos.add(new QuickReplyDto(course.getName(), course.getId().toString())));
+        return quickReplyResponseDto;
     }
 
-    public List<Group> getGroupsByFacultyIdAndCourseId(Boolean fromArmenianSector, String facultyId, String courseId) {
+    public QuickReplyResponseDto getGroupsByFacultyIdAndCourseId(Boolean fromArmenianSector, String facultyId, String courseId) {
         List<Group> groups = new ArrayList<>();
         scheduleRepository.findAll(scheduleWidth)
                 .stream()
@@ -471,10 +474,15 @@ public class RauService {
                         groups.add(schedule.getGroup());
                     }
                 });
-        return groups;
+        List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your Group.");
+        quickReplyResponseDto.setQuickReplyDtoList(quickReplyDtos);
+
+        groups.forEach(group -> quickReplyDtos.add(new QuickReplyDto(group.getName(), group.getId().toString())));
+        return quickReplyResponseDto;
     }
 
-    public Boolean checkIfGroupHasPartitions(Boolean fromArmenianSector, String facultyId, String courseId, String groupId) {
+    public QuickReplyResponseDto checkIfGroupHasPartitions(Boolean fromArmenianSector, String facultyId, String courseId, String groupId) {
         List<Schedule> list = scheduleRepository.findAll(scheduleWidth)
                 .stream()
                 .filter((schedule -> schedule.getFaculty().getId().toString().equals(facultyId)
@@ -482,6 +490,37 @@ public class RauService {
                         && schedule.getGroup().getId().toString().equals(groupId)
                         && schedule.getArmenianSector().equals(fromArmenianSector)))
                 .collect(Collectors.toList());
-        return list.size() > 1;
+        if (list.size() > 1) {
+            return new QuickReplyResponseDto("Choose your group part.",
+                    Arrays.asList(new QuickReplyDto("1", "1"),
+                            new QuickReplyDto("2", "2")));
+        } else {
+            return null;
+        }
+    }
+
+    public Lesson getLessonById(String lessonId) {
+        Optional<Lesson> lessonOpt = lessonRepository.findById(Long.valueOf(lessonId));
+        return lessonOpt.orElse(null);
+    }
+
+    public Faculty getFacultyById(String facultyId) {
+        Optional<Faculty> facultyOptional = facultyRepository.findById(Long.valueOf(facultyId), 2);
+        return facultyOptional.orElse(null);
+    }
+
+    public Course getCourseById(String courseId) {
+        Optional<Course> courseOptional = courseRepository.findById(Long.valueOf(courseId));
+        return courseOptional.orElse(null);
+    }
+
+    public Group getGroupById(String groupId) {
+        Optional<Group> groupOptional = groupRepository.findById(Long.valueOf(groupId));
+        return groupOptional.orElse(null);
+    }
+
+    public Department getDepartmentById(String departmentId) {
+        Optional<Department> departmentOptional = departmentRepository.findById(Long.valueOf(departmentId));
+        return departmentOptional.orElse(null);
     }
 }

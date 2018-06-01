@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/schedule")
+@RequestMapping("/admin")
 public class AdminController {
     private final RauService rauService;
 
@@ -72,6 +72,32 @@ public class AdminController {
     public ResponseEntity<?> getLessons() {
         return ResponseEntity.ok(rauService.getAllLessons());
     }
+
+    @GetMapping("/get/department/{departmentId}")
+    public ResponseEntity<?> getDepartmentById(@PathVariable("departmentId")String departmentId) {
+        return ResponseEntity.ok(rauService.getDepartmentById(departmentId));
+    }
+
+    @GetMapping("/get/faculty/{facultyId}")
+    public ResponseEntity<?> getFacultyById(@PathVariable("facultyId")String facultyId) {
+        return ResponseEntity.ok(rauService.getFacultyById(facultyId));
+    }
+
+    @GetMapping("/get/lesson/{lessonId}")
+    public ResponseEntity<?> getLessonById(@PathVariable("lessonId")String lessonId) {
+        return ResponseEntity.ok(rauService.getLessonById(lessonId));
+    }
+
+    @GetMapping("/get/course/{courseId}")
+    public ResponseEntity<?> getCourseById(@PathVariable("courseId")String courseId) {
+        return ResponseEntity.ok(rauService.getCourseById(courseId));
+    }
+
+    @GetMapping("/get/group/{groupId}")
+    public ResponseEntity<?> getGroupById(@PathVariable("groupId")String groupId) {
+        return ResponseEntity.ok(rauService.getGroupById(groupId));
+    }
+
 
 
 }

@@ -29,8 +29,7 @@ import com.github.messenger4j.webhook.event.TextMessageEvent;
 import com.rau.bot.dto.QuickReplyDto;
 import com.rau.bot.dto.QuickReplyResponseDto;
 import com.rau.bot.dto.UserStateDto;
-import com.rau.bot.entity.user.Department;
-import com.rau.bot.entity.user.User;
+import com.rau.bot.entity.user.*;
 import com.rau.bot.enums.UserState;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +41,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.rau.bot.enums.UserState.*;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
@@ -60,6 +60,7 @@ public class MessengerBot {
     public MessengerBot(@Value("${messenger4j.appSecret}") final String appSecret,
                         @Value("${messenger4j.verifyToken}") final String verifyToken, @Value("${messenger4j.pageAccessToken}") final String pageAccessToken) throws MessengerApiException, MessengerIOException {
 
+        stateMap = new HashMap<>();
         this.messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
         messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
 
@@ -134,11 +135,19 @@ public class MessengerBot {
                     }
                     newTextMessageEventHandler(event.asTextMessageEvent());
                 } else if (event.isQuickReplyMessageEvent()) {
-                    newQuickReplyMessageEventHandler(event.asQuickReplyMessageEvent());
+                    try {
+                        newQuickReplyMessageEventHandler(event.asQuickReplyMessageEvent());
+                    } catch (MessengerApiException | MessengerIOException e) {
+                        e.printStackTrace();
+                    }
                 } else if (event.isAttachmentMessageEvent()) {
                     newAttachmentMessageEventHandler(event.asAttachmentMessageEvent());
                 } else if (event.isPostbackEvent()) {
-                    newPostbackEventHandler(event.asPostbackEvent());
+                    try {
+                        newPostbackEventHandler(event.asPostbackEvent());
+                    } catch (MessengerApiException | MessengerIOException e) {
+                        e.printStackTrace();
+                    }
                 } else if (event.isMessageEchoEvent()) {
                     newEchoMessageEventHandler();
                 } else if (event.isAccountLinkingEvent()) {
@@ -178,48 +187,100 @@ public class MessengerBot {
         log.info("Received new Text Message event.");
     }
 
-    private void newQuickReplyMessageEventHandler(QuickReplyMessageEvent event) {
+    private void newQuickReplyMessageEventHandler(QuickReplyMessageEvent event) throws MessengerApiException, MessengerIOException {
         log.info("Received new Quick Reply event.");
 
         String userId = event.senderId();
         String payload = event.payload();
-        String text = event.payload().substring(2);
+        String text = event.text();
 
         UserStateDto userStateDto = stateMap.get(userId);
-
+        User user = userStateDto.getUser();
 
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<?> entity = new HttpEntity<>(event.senderId(), headers);
         UriComponentsBuilder builder;
+        HttpEntity<?> entity;
+        if (payload.equals("end")) {
+            stateMap.remove(userId);
+            sendTextMessage(userId, "Registration canceled.");
+            return;
+        } else if (payload.equals("back")) {
+            switch (userStateDto.getUserState()) {
+                case DEPARTMENT:
+                    userStateDto.setUserState(ARMENIAN_SECTOR);
+                    break;
+                case FACULTY:
+                    userStateDto.setUserState(DEPARTMENT);
+                    break;
+                case COURSE:
+                    userStateDto.setUserState(FACULTY);
+                    break;
+                case GROUP:
+                    userStateDto.setUserState(COURSE);
+                    break;
+                case PARTITION:
+                    userStateDto.setUserState(GROUP);
+                    break;
+                case ARMENIAN_SECTOR:
+                default:
+                    sendTextMessage(userId, "Something went wrong ...");
+                    return;
+            }
+        } else {
+            switch (userStateDto.getUserState()) {
+                case ARMENIAN_SECTOR:
+                    userStateDto.setUserState(DEPARTMENT);
+                    user.setArmenianSector(payload.toLowerCase().equals("true"));
+                    break;
+                case DEPARTMENT:
+                    userStateDto.setUserState(UserState.FACULTY);
+                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/department/" + payload);
+                    entity = new HttpEntity<>(userId, headers);
 
-        switch (payload.substring(0, 1)) {
-            case "1":
-                user.setArmenianSector(text.equals("true"));
+                    Department department = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Department.class).getBody();
+                    user.setFaculty(new Faculty(null, department));
+                    break;
+                case FACULTY:
+                    userStateDto.setUserState(UserState.COURSE);
+                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/faculty" + payload);
+                    entity = new HttpEntity<>(userId, headers);
 
+                    Faculty faculty = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Faculty.class).getBody();
+                    user.setFaculty(faculty);
+                    break;
+                case COURSE:
+                    userStateDto.setUserState(GROUP);
+                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/course" + payload);
+                    entity = new HttpEntity<>(userId, headers);
 
-                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/department")
-                        .queryParam("fromArmenianSector", user.getArmenianSector());
-                List<Department> departments = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, List.class).getBody();
-                for (Department department : departments) {
+                    Course course = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Course.class).getBody();
+                    user.setCourse(course);
+                    break;
+                case GROUP:
+                    userStateDto.setUserState(PARTITION);
+                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/group" + payload);
+                    entity = new HttpEntity<>(userId, headers);
 
-                }
-                break;
-            case "2":
+                    Group group = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Group.class).getBody();
+                    user.setGroup(group);
+                    break;
+                case PARTITION:
+                    user.setFromFirstPart(payload.equals("1"));
+                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/add");
+                    entity = new HttpEntity<>(user, headers);
 
-
-            case "3":
-
-            case "4":
-
-            case "5":
+                    restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class).getBody();
+                    sendTextMessage(userId, "You have successfully registered! Now you can search your module, exams and schedule. Have a nice day!");
+                    stateMap.remove(userId);
+                    break;
+                default:
+                    return;
+            }
         }
-
-        List list = new ArrayList();
-
-
+        sendNextRegistrationStep(userId);
     }
 
     private void newPostbackEventHandler(PostbackEvent event) throws MessengerApiException, MessengerIOException {
@@ -253,7 +314,7 @@ public class MessengerBot {
                     break;
                 case "REGISTER":
                     if (stateMap.get(userId) == null) {
-                        stateMap.put(userId, new UserStateDto(new User(), UserState.ARMENIAN_SECTOR));
+                        stateMap.put(userId, new UserStateDto(new User(), ARMENIAN_SECTOR));
                     }
                     sendNextRegistrationStep(userId);
                 default:
@@ -284,36 +345,47 @@ public class MessengerBot {
         HttpEntity<?> entity = new HttpEntity<>(userId, headers);
         UriComponentsBuilder builder;
 
+        User user = userStateDto.getUser();
+
         switch (userStateDto.getUserState()) {
             case ARMENIAN_SECTOR:
-                sendQuickRepliesToUser(userId, new QuickReplyResponseDto("Are you from armenian sector?",
-                        Arrays.asList(new QuickReplyDto("yes", "1_true"), new QuickReplyDto("no", "1_false"))), true);
-                userStateDto.setUserState(UserState.DEPARTMENT);
+                sendQuickRepliesToUser(userId, new QuickReplyResponseDto("Are you from Armenian sector?",
+                        Arrays.asList(new QuickReplyDto("Yes", "true"),
+                                new QuickReplyDto("No", "false"))), false);
+                userStateDto.setUserState(DEPARTMENT);
                 return;
             case DEPARTMENT:
                 builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/department")
-                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                        .queryParam("fromArmenianSector", user.getArmenianSector());
                 userStateDto.setUserState(UserState.FACULTY);
                 break;
             case FACULTY:
-                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
-                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/faculty/" + user.getFaculty().getDepartment().getId())
+                        .queryParam("fromArmenianSector", user.getArmenianSector());
                 userStateDto.setUserState(UserState.COURSE);
                 break;
             case COURSE:
-                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
-                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
-                userStateDto.setUserState(UserState.GROUP);
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/course/" + user.getFaculty().getId().toString())
+                        .queryParam("fromArmenianSector", user.getArmenianSector());
+                userStateDto.setUserState(GROUP);
                 break;
             case GROUP:
-                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
-                        .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
-                userStateDto.setUserState(UserState.PARTITION);
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/group/"
+                        + user.getFaculty().getId().toString()
+                        + "/"
+                        + user.getCourse().getId().toString())
+                        .queryParam("fromArmenianSector", user.getArmenianSector());
+                userStateDto.setUserState(PARTITION);
                 break;
             case PARTITION:
-                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/")
+                builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/group/has/partitions/"
+                        + user.getFaculty().getId().toString()
+                        + "/"
+                        + user.getCourse().getId().toString()
+                        + "/"
+                        + user.getGroup().getId().toString())
                         .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
-                userStateDto.setUserState(UserState.DEPARTMENT);
+                userStateDto.setUserState(DEPARTMENT);
                 break;
             default:
                 sendTextMessage(userId, "Something went wrong...");
@@ -400,8 +472,8 @@ public class MessengerBot {
         String text = quickReplyResponseDto.getText();
         List<QuickReplyDto> quickReplyDtoList = quickReplyResponseDto.getQuickReplyDtoList();
         if (hasExtraButtons) {
-            quickReplyDtoList.add(new QuickReplyDto("Back", "8"));
-            quickReplyDtoList.add(new QuickReplyDto("Cancel", "9"));
+            quickReplyDtoList.add(new QuickReplyDto("Back", "back"));
+            quickReplyDtoList.add(new QuickReplyDto("Cancel", "end"));
         }
 
         List<QuickReply> quickReplies = quickReplyDtoList.stream()

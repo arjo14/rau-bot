@@ -86,20 +86,20 @@ public class BackendStarter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        userRepository.deleteAll();
-        createLessonTypes();
-        createHours();
-        createClassRooms();
-        createDepartments();
-        createFaculties();
-        createGroups();
-        createLecturers();
-        createSubjects();
-
-
-        createMyGroupSchedule();
-        createMyModules();
-        createMyExams();
+//        userRepository.deleteAll();
+//        createLessonTypes();
+//        createHours();
+//        createClassRooms();
+//        createDepartments();
+//        createFaculties();
+//        createGroups();
+//        createLecturers();
+//        createSubjects();
+//
+//
+//        createMyGroupSchedule();
+//        createMyModules();
+//        createMyExams();
 
 
     }
