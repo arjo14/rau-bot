@@ -42,7 +42,7 @@ public class MessengerBot {
                         MessengerService messengerService) throws MessengerApiException, MessengerIOException {
         this.messengerService = messengerService;
 
-
+        System.out.println(appSecret + verifyToken + pageAccessToken);
         this.messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
         messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
 
