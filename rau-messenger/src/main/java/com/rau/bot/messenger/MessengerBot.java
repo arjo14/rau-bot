@@ -43,7 +43,8 @@ public class MessengerBot {
         this.messengerService = messengerService;
 
         System.out.println(appSecret + verifyToken + pageAccessToken);
-        this.messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
+        this.messenger = Messenger.create("EAACQZAzP57vkBAMNqlM9NVguG1Ty4wFL2H91sVoylF97hldRZBTPatK1X8V9qZBo0GsyJMShHAJ3rIvttFdH2n0tYZAcBfcYtZCEyDkhVJm7XcojncihSzLk4RzdWrFbrcn26dZC9MyA0XZAnB0QHpIGRz8RZCm55LEqPPx0Tw3VIgZDZD",
+                "18bd8e1cc5e236f76e77f39302cf32a8", "message");
         messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
 
         final PostbackCallToAction callToActionAA = PostbackCallToAction.create("Next Lesson", "NEXT");
