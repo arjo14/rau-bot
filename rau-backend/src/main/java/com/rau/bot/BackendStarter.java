@@ -15,6 +15,7 @@ import com.rau.bot.repository.user.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.PropertySource;
 
 import java.text.ParseException;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 @SpringBootApplication
+@EntityScan("../../../../rau-common/src/main/java/com/rau/bot/entity")
 @PropertySource({"classpath:network.properties"})
 public class BackendStarter implements CommandLineRunner {
 
