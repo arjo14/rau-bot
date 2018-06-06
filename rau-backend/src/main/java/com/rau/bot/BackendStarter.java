@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 
 @SpringBootApplication
-@EntityScan("../../../../rau-common/src/main/java/com/rau/bot/entity")
 @PropertySource({"classpath:network.properties"})
 public class BackendStarter implements CommandLineRunner {
 
@@ -88,20 +87,20 @@ public class BackendStarter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        userRepository.deleteAll();
-        createLessonTypes();
-        createHours();
-        createClassRooms();
-        createDepartments();
-        createFaculties();
-        createGroups();
-        createLecturers();
-        createSubjects();
-
-
-        createMyGroupSchedule();
-        createMyModules();
-        createMyExams();
+//        userRepository.deleteAll();
+//        createLessonTypes();
+//        createHours();
+//        createClassRooms();
+//        createDepartments();
+//        createFaculties();
+//        createGroups();
+//        createLecturers();
+//        createSubjects();
+//
+//
+//        createMyGroupSchedule();
+//        createMyModules();
+//        createMyExams();
 
 
     }

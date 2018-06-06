@@ -71,88 +71,87 @@ public class MessengerService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         UriComponentsBuilder builder;
         HttpEntity<?> entity;
-        if (payload.equals("end")) {
-            stateMap.remove(userId);
-            sendTextMessageToUser(userId, "Registration canceled.");
-            return;
-        } else if (payload.equals("back")) {
-            switch (userStateDto.getUserState()) {
-                case DEPARTMENT:
-                    userStateDto.setUserState(ARMENIAN_SECTOR);
-                    user.setArmenianSector(null);
-                    break;
-                case FACULTY:
-                    userStateDto.setUserState(DEPARTMENT);
-                    user.setFaculty(null);
-                    break;
-                case COURSE:
-                    userStateDto.setUserState(FACULTY);
-                    user.setFaculty(null);
-                    break;
-                case GROUP:
-                    userStateDto.setUserState(COURSE);
-                    user.setCourse(null);
-                    break;
-                case PARTITION:
-                    userStateDto.setUserState(GROUP);
-                    user.setGroup(null);
-                    break;
-                case ARMENIAN_SECTOR:
-                default:
-                    sendTextMessageToUser(userId, "Something went wrong ...");
-                    return;
-            }
-        } else {
-            switch (userStateDto.getUserState()) {
-                case ARMENIAN_SECTOR:
-                    userStateDto.setUserState(DEPARTMENT);
-                    user.setArmenianSector(payload.toLowerCase().equals("true"));
-                    break;
-                case DEPARTMENT:
-                    userStateDto.setUserState(UserState.FACULTY);
-                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/department/" + payload);
-                    entity = new HttpEntity<>(userId, headers);
+        switch (payload) {
+            case "end":
+                stateMap.remove(userId);
+                sendTextMessageToUser(userId, "Registration canceled.");
+                return;
+            case "back":
+                switch (userStateDto.getUserState()) {
+                    case DEPARTMENT:
+                        userStateDto.setUserState(ARMENIAN_SECTOR);
+                        user.setArmenianSector(null);
+                        break;
+                    case FACULTY:
+                        userStateDto.setUserState(DEPARTMENT);
+                        user.setFaculty(null);
+                        break;
+                    case COURSE:
+                        userStateDto.setUserState(FACULTY);
+                        user.setFaculty(null);
+                        break;
+                    case GROUP:
+                        userStateDto.setUserState(COURSE);
+                        user.setCourse(null);
+                        break;
+                    case PARTITION:
+                        userStateDto.setUserState(GROUP);
+                        user.setGroup(null);
+                        break;
+                    case ARMENIAN_SECTOR:
+                    default:
+                        sendTextMessageToUser(userId, "Something went wrong ...");
+                        return;
+                }
+                break;
+            default:
+                switch (userStateDto.getUserState()) {
+                    case ARMENIAN_SECTOR:
+                        user.setArmenianSector(payload.toLowerCase().equals("true"));
+                        break;
+                    case DEPARTMENT:
+                        builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/department/" + payload);
+                        entity = new HttpEntity<>(userId, headers);
 
-                    Department department = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Department.class).getBody();
-                    user.setFaculty(new Faculty(null, department));
-                    break;
-                case FACULTY:
-                    userStateDto.setUserState(UserState.COURSE);
-                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/faculty" + payload);
-                    entity = new HttpEntity<>(userId, headers);
+                        Department department = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Department.class).getBody();
+                        user.setFaculty(new Faculty(null, department));
+                        break;
+                    case FACULTY:
+                        builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/faculty" + payload);
+                        entity = new HttpEntity<>(userId, headers);
 
-                    Faculty faculty = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Faculty.class).getBody();
-                    user.setFaculty(faculty);
-                    break;
-                case COURSE:
-                    userStateDto.setUserState(GROUP);
-                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/course" + payload);
-                    entity = new HttpEntity<>(userId, headers);
+                        Faculty faculty = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Faculty.class).getBody();
+                        user.setFaculty(faculty);
+                        break;
+                    case COURSE:
+                        builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/course" + payload);
+                        entity = new HttpEntity<>(userId, headers);
 
-                    Course course = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Course.class).getBody();
-                    user.setCourse(course);
-                    break;
-                case GROUP:
-                    userStateDto.setUserState(PARTITION);
-                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/group" + payload);
-                    entity = new HttpEntity<>(userId, headers);
+                        Course course = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Course.class).getBody();
+                        user.setCourse(course);
+                        break;
+                    case GROUP:
+                        builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/admin/get/group" + payload);
+                        entity = new HttpEntity<>(userId, headers);
 
-                    Group group = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Group.class).getBody();
-                    user.setGroup(group);
-                    break;
-                case PARTITION:
-                    user.setFromFirstPart(payload.equals("1"));
-                    builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/add");
-                    entity = new HttpEntity<>(user, headers);
+                        Group group = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, Group.class).getBody();
+                        user.setGroup(group);
+                        break;
+                    case PARTITION:
+                        user.setFromFirstPart(payload.equals("1"));
+                        builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/add");
+                        entity = new HttpEntity<>(user, headers);
 
-                    restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class).getBody();
-                    sendTextMessageToUser(userId, "You have successfully registered! Now you can search your module, exams and schedule. Have a nice day!");
-                    stateMap.remove(userId);
-                    break;
-                default:
-                    return;
-            }
+                        restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, Object.class).getBody();
+                        sendTextMessageToUser(userId, "You have successfully registered! Now you can search your module, exams and schedule. Have a nice day!");
+                        stateMap.remove(userId);
+                        break;
+                    default:
+                        return;
+                }
+                break;
         }
+        changeStateToNext(userId);
         sendNextRegistrationStep(userId);
     }
 
@@ -236,22 +235,18 @@ public class MessengerService {
                 sendQuickRepliesToUser(userId, new QuickReplyResponseDto("Are you from Armenian sector?",
                         Arrays.asList(new QuickReplyDto("Yes", "true"),
                                 new QuickReplyDto("No", "false"))), false);
-                userStateDto.setUserState(DEPARTMENT);
                 return;
             case DEPARTMENT:
                 builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/department")
                         .queryParam("fromArmenianSector", user.getArmenianSector());
-                userStateDto.setUserState(UserState.FACULTY);
                 break;
             case FACULTY:
                 builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/faculty/" + user.getFaculty().getDepartment().getId())
                         .queryParam("fromArmenianSector", user.getArmenianSector());
-                userStateDto.setUserState(UserState.COURSE);
                 break;
             case COURSE:
                 builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/course/" + user.getFaculty().getId().toString())
                         .queryParam("fromArmenianSector", user.getArmenianSector());
-                userStateDto.setUserState(GROUP);
                 break;
             case GROUP:
                 builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/group/"
@@ -259,7 +254,6 @@ public class MessengerService {
                         + "/"
                         + user.getCourse().getId().toString())
                         .queryParam("fromArmenianSector", user.getArmenianSector());
-                userStateDto.setUserState(PARTITION);
                 break;
             case PARTITION:
                 builder = UriComponentsBuilder.fromHttpUrl(backendUrl + "/user/group/has/partitions/"
@@ -269,7 +263,6 @@ public class MessengerService {
                         + "/"
                         + user.getGroup().getId().toString())
                         .queryParam("fromArmenianSector", userStateDto.getUser().getArmenianSector());
-                userStateDto.setUserState(DEPARTMENT);
                 break;
             default:
                 sendTextMessageToUser(userId, "Something went wrong...");
@@ -277,9 +270,30 @@ public class MessengerService {
         }
 
 
-        QuickReplyResponseDto quickReplyResponseDto = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, entity, QuickReplyResponseDto.class).getBody();
+        QuickReplyResponseDto quickReplyResponseDto = restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.GET, entity, QuickReplyResponseDto.class).getBody();
 
         sendQuickRepliesToUser(userId, quickReplyResponseDto, true);
+    }
+
+    private void changeStateToNext(String userId) {
+        UserStateDto state = stateMap.get(userId);
+        switch (state.getUserState()) {
+            case ARMENIAN_SECTOR:
+                state.setUserState(DEPARTMENT);
+                break;
+            case DEPARTMENT:
+                state.setUserState(FACULTY);
+                break;
+            case FACULTY:
+                state.setUserState(COURSE);
+                break;
+            case COURSE:
+                state.setUserState(GROUP);
+                break;
+            case GROUP:
+                state.setUserState(PARTITION);
+                break;
+        }
     }
 
 
