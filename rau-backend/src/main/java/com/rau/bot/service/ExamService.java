@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -68,7 +69,7 @@ public class ExamService {
             messengerService.sendTextMessageToMessengerUser(userId, "You don't have any exams yet!");
         } else {
             examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
-            text.append("Here is your all exams:\n\n");
+            text.append("Все твои экзамены:\n\n");
             for (Exam exam : examSchedule.getExams()) {
                 text.append(formatter.format(exam.getDate()))
                         .append(" ")
@@ -213,11 +214,13 @@ public class ExamService {
             messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find module for you");
             throw new IllegalArgumentException("Can't find modules for this user");
         } else {
+            List<Module> modules = new ArrayList<>();
             scheduleList.get(0).getModules().forEach(module -> {
                 if (module.getDate().compareTo(new Date()) < 0) {
-                    scheduleList.get(0).getModules().remove(module);
+                    modules.add(module);
                 }
             });
+            scheduleList.get(0).getModules().removeAll(modules);
             moduleScheduleRepository.save(scheduleList.get(0));
             return moduleScheduleRepository.findById(scheduleList.get(0).getId(), examWidth).get();
         }

@@ -169,7 +169,7 @@ public class RauService {
 
     public void sendScheduleToUserForNextLesson(User user) {
         Schedule schedule = getScheduleForUser(user);
-        StringBuilder endText = new StringBuilder("Your next lesson is ");
+        StringBuilder endText = new StringBuilder("Твой следуюший урок ");
 
         LocalDateTime localDateTime = LocalDateTime.now();
         int hour = localDateTime.getHour();
@@ -179,7 +179,7 @@ public class RauService {
         if (DayOfWeek.SUNDAY.equals(localDateTime.getDayOfWeek()) || hour > 18 || hour == 18 && minute > 15) {
 
             WeekDayLesson wd = getNextLesson(schedule, localDateTime);
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой следуюший урок :\n"
                     + wd.getWeekDay().getName()
                     + ":\n "
                     + wd.getHourLessons().get(0).getHour()
@@ -188,10 +188,13 @@ public class RauService {
         } else if (hour < 9 || hour == 9 && minute < 30) {
 
             WeekDayLesson wd = getNextLesson(schedule, localDateTime.minusDays(1));
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой следуюший урок :\n"
                     + wd.getWeekDay().getName()
-                    + ", "
-                    + wd.getHourLessons().get(0));
+                    + "\n"
+                    + wd.getHourLessons().get(0).getHour()
+                    + RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(1))
+                    + "\n"
+                    + wd.getHourLessons().get(0).getLesson());
 
         } else {
             int currentLessonHour = getLessonHourByHourAndMinute(hour, minute);
@@ -210,7 +213,7 @@ public class RauService {
                 });
                 if (!has5thHourLesson[0]) {
                     WeekDayLesson weekDayLesson = getNextLesson(schedule, localDateTime);
-                    messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+                    messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой следуюший урок :\n"
                             + weekDayLesson.getWeekDay().getName()
                             + ", "
                             + weekDayLesson.getHourLessons().get(0));
@@ -253,7 +256,7 @@ public class RauService {
                     WeekDayLesson nextLesson = getNextLesson(schedule, localDateTime);
 
                     messengerService.sendTextMessageToMessengerUser(user.getUserId(),
-                            "You don't have a lesson now. Your next lesson is :\n" +
+                            "You don't have a lesson now. Твой следуюший урок :\n" +
                                     nextLesson.getWeekDay().getName() + ", " +
                                     nextLesson.getHourLessons().get(0));
                 }
