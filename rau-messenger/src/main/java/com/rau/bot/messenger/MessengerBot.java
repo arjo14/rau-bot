@@ -38,8 +38,6 @@ import static java.util.Optional.of;
 public class MessengerBot {
     private final MessengerService messengerService;
 
-    private final Map<String, Stack<RegistrationPayload>> registrationStateMap = new ConcurrentHashMap<>();
-
     public MessengerBot(MessengerService messengerService) {
         this.messengerService = messengerService;
 

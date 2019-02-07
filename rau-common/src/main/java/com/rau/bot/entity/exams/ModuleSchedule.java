@@ -1,6 +1,5 @@
 package com.rau.bot.entity.exams;
 
-import com.rau.bot.entity.schedule.WeekDayLesson;
 import com.rau.bot.entity.user.Course;
 import com.rau.bot.entity.user.Faculty;
 import com.rau.bot.entity.user.Group;

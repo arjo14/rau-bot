@@ -99,8 +99,8 @@ public class BackendStarter implements CommandLineRunner {
 
 
         createMyGroupSchedule();
-        createMyModules();
-        createMyExams();
+//        createMyModules();
+//        createMyExams();
 
 
     }
@@ -210,11 +210,11 @@ public class BackendStarter implements CommandLineRunner {
         moduleRepository.deleteAll();
         User user = userRepository.findUserByFullNameEquals("John Vahanyan");
         ModuleSchedule moduleSchedule = new ModuleSchedule();
-        moduleSchedule.setCourse(user.getCourse());
         moduleSchedule.setFaculty(user.getFaculty());
+        moduleSchedule.setCourse(user.getCourse());
         moduleSchedule.setArmenianSector(user.getArmenianSector());
-        moduleSchedule.setFromFirstPart(user.getFromFirstPart());
         moduleSchedule.setGroup(user.getGroup());
+        moduleSchedule.setFromFirstPart(user.getFromFirstPart());
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -260,14 +260,12 @@ public class BackendStarter implements CommandLineRunner {
         hourLessonRepository.deleteAll();
 
 
-        //endregion
-
         String courseName = "3";
         Course course = courseRepository.findByName(courseName);
         if (course == null) {
             course = new Course(courseName);
         }
-        String departmentName = "ИМВТ";
+        String departmentName = "ИМИ";
         Department department = departmentRepository.findByName(departmentName);
         if (department == null) {
             department = new Department(departmentName);

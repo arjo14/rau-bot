@@ -71,23 +71,28 @@ public class ExamService {
             examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
             text.append("Все твои экзамены:\n\n");
             for (Exam exam : examSchedule.getExams()) {
-                text.append(formatter.format(exam.getDate()))
-                        .append(" ")
-                        .append(exam.getHours())
-                        .append("\n")
-                        .append(exam.getSubject().getName())
-                        .append("\n");
-                for (Lecturer lecturer : exam.getLecturers()) {
-                    text.append(lecturer.getName())
-                            .append(", ");
-                }
-                text.append(exam.getClassRoom().getName())
-                        .append("\n")
-                        .append("______________________\n\n");
+                addDateSubjectLectureToText(text, exam.getDate(), exam.getHours(), exam.getSubject().getName(), exam.getLecturers(), exam.getClassRoom().getName());
             }
 
             messengerService.sendTextMessageToMessengerUser(userId, text.substring(0, text.length() - 24));
         }
+    }
+
+    private void addDateSubjectLectureToText(StringBuilder text, Date date, String hours, String subjectName, List<Lecturer> lecturers, String classRoomName) {
+        text.append(formatter.format(date))
+                .append(" ")
+                .append(hours)
+                .append("\n")
+                .append(subjectName)
+                .append("\n");
+        for (Lecturer lecturer : lecturers) {
+            text.append(lecturer.getName())
+                    .append(", ");
+        }
+        text.append(classRoomName)
+                .append("\n")
+                .append("______________________\n\n");
+
     }
 
     public void sendNextExamToUser(String userId) {
@@ -107,14 +112,19 @@ public class ExamService {
                     .append("\n")
                     .append(exam.getSubject().getName())
                     .append("\n");
-            for (Lecturer lecturer : exam.getLecturers()) {
-                text.append(lecturer.getName())
-                        .append(", ");
-            }
+            appendLecturersToText(text, exam.getLecturers());
+
             text.append(exam.getClassRoom().getName());
             messengerService.sendTextMessageToMessengerUser(userId, text.toString());
         }
 
+    }
+
+    private void appendLecturersToText(StringBuilder text, List<Lecturer> lecturers) {
+        for (Lecturer lecturer : lecturers) {
+            text.append(lecturer.getName())
+                    .append(", ");
+        }
     }
 
     public void sendAllModulesToUser(String userId) {
@@ -128,19 +138,8 @@ public class ExamService {
             moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
             text.append("Here is your all modules:\n\n");
             for (Module module : moduleSchedule.getModules()) {
-                text.append(formatter.format(module.getDate()))
-                        .append(" ")
-                        .append(module.getHours())
-                        .append("\n")
-                        .append(module.getSubject().getName())
-                        .append("\n");
-                for (Lecturer lecturer : module.getLecturers()) {
-                    text.append(lecturer.getName())
-                            .append(", ");
-                }
-                text.append(module.getClassRoom().getName())
-                        .append("\n")
-                        .append("______________________\n\n");
+                addDateSubjectLectureToText(text, module.getDate(), module.getHours(),
+                        module.getSubject().getName(), module.getLecturers(), module.getClassRoom().getName());
             }
 
             messengerService.sendTextMessageToMessengerUser(userId, text.substring(0, text.length() - 24));
@@ -165,48 +164,47 @@ public class ExamService {
                     .append("\n")
                     .append(module.getSubject().getName())
                     .append("\n");
-            for (Lecturer lecturer : module.getLecturers()) {
-                text.append(lecturer.getName())
-                        .append(", ");
-            }
+            appendLecturersToText(text, module.getLecturers());
             text.append(module.getClassRoom().getName());
             messengerService.sendTextMessageToMessengerUser(userId, text.toString());
         }
     }
 
     private ExamSchedule getExamScheduleFromUser(User user) {
-        Faculty faculty = user.getFaculty();
-        Course course = user.getCourse();
-        Group group = user.getGroup();
-        Boolean fromFirstPart = user.getFromFirstPart();
         Boolean armenianSector = user.getArmenianSector();
+        Boolean fromFirstPart = user.getFromFirstPart();
+        Faculty faculty = user.getFaculty();
+        Group group = user.getGroup();
+        Course course = user.getCourse();
 
-        List<ExamSchedule> schedules = examScheduleRepository.findAllByArmenianSectorEqualsAndFromFirstPartEquals(armenianSector, fromFirstPart);
-        List<ExamSchedule> scheduleList = schedules.stream().filter(schedule -> schedule.getCourse().equals(course) && schedule.getFaculty().equals(faculty)
+        List<ExamSchedule> examSchedules = examScheduleRepository.findAllByArmenianSectorEqualsAndFromFirstPartEquals(armenianSector, fromFirstPart);
+        System.out.println("Exam schedules" + examSchedules.toString());
+        List<ExamSchedule> examScheduleList = examSchedules.stream().filter(schedule -> schedule.getCourse().equals(course) && schedule.getFaculty().equals(faculty)
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());
-        if (scheduleList.isEmpty()) {
+        if (examScheduleList.isEmpty()) {
             messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find exam for you");
             throw new IllegalArgumentException("Can't find exams for this user");
         } else {
-            scheduleList.get(0).getExams().forEach(exam -> {
+            examScheduleList.get(0).getExams().forEach(exam -> {
                 if (exam.getDate().compareTo(new Date()) < 0) {
-                    scheduleList.get(0).getExams().remove(exam);
+                    examScheduleList.get(0).getExams().remove(exam);
                 }
             });
-            examScheduleRepository.save(scheduleList.get(0));
-            return examScheduleRepository.findById(scheduleList.get(0).getId(), examWidth).get();
+            examScheduleRepository.save(examScheduleList.get(0));
+            return examScheduleRepository.findById(examScheduleList.get(0).getId(), examWidth).get();
         }
     }
 
     private ModuleSchedule getModuleScheduleFromUser(User user) {
         Faculty faculty = user.getFaculty();
-        Course course = user.getCourse();
         Group group = user.getGroup();
-        Boolean fromFirstPart = user.getFromFirstPart();
+        Course course = user.getCourse();
         Boolean armenianSector = user.getArmenianSector();
+        Boolean fromFirstPart = user.getFromFirstPart();
 
         List<ModuleSchedule> schedules = moduleScheduleRepository.findAllByArmenianSectorEqualsAndFromFirstPartEquals(armenianSector, fromFirstPart);
+        System.out.println("Module schedules" + schedules);
         List<ModuleSchedule> scheduleList = schedules.stream().filter(schedule -> schedule.getCourse().equals(course) && schedule.getFaculty().equals(faculty)
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());

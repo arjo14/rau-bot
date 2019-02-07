@@ -28,7 +28,6 @@ import com.github.messenger4j.webhook.event.TextMessageEvent;
 import com.rau.bot.dto.QuickReplyDto;
 import com.rau.bot.dto.QuickReplyResponseDto;
 import com.rau.bot.dto.UserStateDto;
-import com.rau.bot.entity.user.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -42,7 +41,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.rau.bot.enums.UserState.*;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 
@@ -76,7 +74,7 @@ public class MessengerService {
         final PostbackCallToAction callToActionAA1 = PostbackCallToAction.create("⏭️ След. модуль", "NEXT_MODULE");
         final PostbackCallToAction callToActionAC1 = PostbackCallToAction.create("☠️ Все модули", "ALL_MODULES");
 
-        final PostbackCallToAction callToActionAA2 = PostbackCallToAction.create("⏭️ След. экзамены", "NEXT_EXAM");
+        final PostbackCallToAction callToActionAA2 = PostbackCallToAction.create("⏭️ След. экзамен", "NEXT_EXAM");
         final PostbackCallToAction callToActionAC2 = PostbackCallToAction.create("☠️ Все экзамены", "ALL_EXAMS");
 
         final NestedCallToAction callToActionForModules = NestedCallToAction.create("\uD83D\uDD14 Модули",
@@ -155,6 +153,42 @@ public class MessengerService {
         String userId = event.senderId();
         String payload = event.payload();
 
+        switch (payload) {
+            case "1":
+                sendQuickRepliesToUser(userId,
+                        new QuickReplyResponseDto("Хорошо! А теперь выберите институт.",
+                                Arrays.asList(new QuickReplyDto("ИМВТ", "2"), new QuickReplyDto("ИПП", "ипп"),
+                                        new QuickReplyDto("ИГН", "игн"), new QuickReplyDto(" ИнЭкБиз", "inekbiz"))),
+                        true);
+                break;
+            case "2":
+                sendQuickRepliesToUser(userId,
+                        new QuickReplyResponseDto("Отлично! Выберите факультет.",
+                                Arrays.asList(new QuickReplyDto("ПМИ", "3"), new QuickReplyDto("ФизТех", "123132"),
+                                        new QuickReplyDto("Биология", "5451,1"))),
+                        true);
+                break;
+            case "3":
+                sendQuickRepliesToUser(userId,
+                        new QuickReplyResponseDto("Чуть-чуть и всё. Выберите группу.",
+                                Arrays.asList(new QuickReplyDto("1", "45451"), new QuickReplyDto("2", "54351"),
+                                        new QuickReplyDto("3", "4"), new QuickReplyDto("4", "5451,1"))),
+                        true);
+                break;
+            case "4":
+                sendQuickRepliesToUser(userId,
+                        new QuickReplyResponseDto("Эта группа имеет уроки, которые разделяются.Выберите вашу часть",
+                                Arrays.asList(new QuickReplyDto("1", "4дсвд"), new QuickReplyDto("2", "5"))),
+                        true);
+                break;
+            case "5":
+                sendTextMessageToUser(userId, "Вы успешно прошли регистрацию. Можете приступить");
+                break;
+
+            default:
+                sendTextMessageToUser(userId, "У меня только тестовая дата.");
+        }
+
     }
 
     public void sendTextMessageToUser(String userId, String text) throws MessengerApiException, MessengerIOException {
@@ -198,6 +232,12 @@ public class MessengerService {
                     urlStr = "/exam/all";
                     break;
                 case "REGISTER":
+                    sendQuickRepliesToUser(userId,
+                            new QuickReplyResponseDto("Ты из армянского сектора?", Arrays.asList(new QuickReplyDto("Да", "0"), new QuickReplyDto("Нет", "1"))),
+                            false);
+                    return;
+                case "Привет":
+                    sendTextMessageToUser(userId, "Привет! Я бот для РАУ.");
                 default:
                     return;
             }
@@ -281,10 +321,10 @@ public class MessengerService {
 
     public void sendQuickRepliesToUser(String userId, QuickReplyResponseDto quickReplyResponseDto, boolean hasExtraButtons) throws MessengerApiException, MessengerIOException {
         String text = quickReplyResponseDto.getText();
-        List<QuickReplyDto> quickReplyDtoList = quickReplyResponseDto.getQuickReplyDtoList();
+        List<QuickReplyDto> quickReplyDtoList = new ArrayList<>(quickReplyResponseDto.getQuickReplyDtoList());
         if (hasExtraButtons) {
-            quickReplyDtoList.add(new QuickReplyDto("Back", "back"));
-            quickReplyDtoList.add(new QuickReplyDto("Cancel", "end"));
+            quickReplyDtoList.add(new QuickReplyDto("Назад", "back"));
+            quickReplyDtoList.add(new QuickReplyDto("Завершить", "end"));
         }
 
         List<QuickReply> quickReplies = quickReplyDtoList.stream()
