@@ -157,7 +157,7 @@ public class MessengerService {
             case "1":
                 sendQuickRepliesToUser(userId,
                         new QuickReplyResponseDto("Хорошо! А теперь выберите институт.",
-                                Arrays.asList(new QuickReplyDto("ИМВТ", "2"), new QuickReplyDto("ИПП", "ипп"),
+                                Arrays.asList(new QuickReplyDto("IMI", "2"), new QuickReplyDto("ИПП", "ипп"),
                                         new QuickReplyDto("ИГН", "игн"), new QuickReplyDto(" ИнЭкБиз", "inekbiz"))),
                         true);
                 break;
@@ -165,7 +165,7 @@ public class MessengerService {
                 sendQuickRepliesToUser(userId,
                         new QuickReplyResponseDto("Отлично! Выберите факультет.",
                                 Arrays.asList(new QuickReplyDto("ПМИ", "3"), new QuickReplyDto("ФизТех", "123132"),
-                                        new QuickReplyDto("Биология", "5451,1"))),
+                                        new QuickReplyDto("Биология", "5451"))),
                         true);
                 break;
             case "3":

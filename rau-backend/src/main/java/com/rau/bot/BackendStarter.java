@@ -87,18 +87,18 @@ public class BackendStarter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        userRepository.deleteAll();
-        createLessonTypes();
-        createHours();
-        createClassRooms();
-        createDepartments();
-        createFaculties();
-        createGroups();
-        createLecturers();
-        createSubjects();
-
-
-        createMyGroupSchedule();
+//        userRepository.deleteAll();
+//        createLessonTypes();
+//        createHours();
+//        createClassRooms();
+//        createDepartments();
+//        createFaculties();
+//        createGroups();
+//        createLecturers();
+//        createSubjects();
+//
+//
+//        createMyGroupSchedule();
 //        createMyModules();
 //        createMyExams();
 
@@ -154,12 +154,12 @@ public class BackendStarter implements CommandLineRunner {
 
     private void createFaculties() {
         facultyRepository.deleteAll();
-        facultyRepository.save(new Faculty("ПМИ", departmentRepository.findByName("ИМВТ")));
+        facultyRepository.save(new Faculty("ПМИ", departmentRepository.findByName("ИМИ")));
     }
 
     private void createDepartments() {
         departmentRepository.deleteAll();
-        departmentRepository.save(new Department("ИМВТ"));
+        departmentRepository.save(new Department("ИМИ"));
     }
 
     private void createMyExams() throws ParseException {

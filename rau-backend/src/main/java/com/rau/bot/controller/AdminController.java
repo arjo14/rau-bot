@@ -98,6 +98,4 @@ public class AdminController {
         return ResponseEntity.ok(rauService.getGroupById(groupId));
     }
 
-
-
 }
