@@ -63,18 +63,19 @@ public class ExamService {
     public void sendAllExamsToUser(String userId) {
         User user = userRepository.findAll().get(0);
         ExamSchedule examSchedule = getExamScheduleFromUser(user);
+        if (examSchedule != null) {
+            StringBuilder text = new StringBuilder();
+            if (examSchedule.getExams().isEmpty()) {
+                messengerService.sendTextMessageToMessengerUser(userId, "Экзамены еще не назначены");
+            } else {
+                examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
+                text.append("Все твои экзамены:\n\n");
+                for (Exam exam : examSchedule.getExams()) {
+                    addDateSubjectLectureToText(text, exam.getDate(), exam.getHours(), exam.getSubject().getName(), exam.getLecturers(), exam.getClassRoom().getName());
+                }
 
-        StringBuilder text = new StringBuilder();
-        if (examSchedule.getExams().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have any exams yet!");
-        } else {
-            examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
-            text.append("Все твои экзамены:\n\n");
-            for (Exam exam : examSchedule.getExams()) {
-                addDateSubjectLectureToText(text, exam.getDate(), exam.getHours(), exam.getSubject().getName(), exam.getLecturers(), exam.getClassRoom().getName());
+                messengerService.sendTextMessageToMessengerUser(userId, text.substring(0, text.length() - 24));
             }
-
-            messengerService.sendTextMessageToMessengerUser(userId, text.substring(0, text.length() - 24));
         }
     }
 
@@ -98,26 +99,26 @@ public class ExamService {
     public void sendNextExamToUser(String userId) {
         User user = userRepository.findAll().get(0);
         ExamSchedule examSchedule = getExamScheduleFromUser(user);
+        if (examSchedule != null) {
+            StringBuilder text = new StringBuilder();
+            if (examSchedule.getExams().isEmpty()) {
+                messengerService.sendTextMessageToMessengerUser(userId, "Экзамены еще не назначены");
+            } else {
+                examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
+                Exam exam = examSchedule.getExams().get(0);
+                text.append("Your next exam is:\n")
+                        .append(formatter.format(exam.getDate()))
+                        .append(" ")
+                        .append(exam.getHours())
+                        .append("\n")
+                        .append(exam.getSubject().getName())
+                        .append("\n");
+                appendLecturersToText(text, exam.getLecturers());
 
-        StringBuilder text = new StringBuilder();
-        if (examSchedule.getExams().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have exam yet!");
-        } else {
-            examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
-            Exam exam = examSchedule.getExams().get(0);
-            text.append("Your next exam is:\n")
-                    .append(formatter.format(exam.getDate()))
-                    .append(" ")
-                    .append(exam.getHours())
-                    .append("\n")
-                    .append(exam.getSubject().getName())
-                    .append("\n");
-            appendLecturersToText(text, exam.getLecturers());
-
-            text.append(exam.getClassRoom().getName());
-            messengerService.sendTextMessageToMessengerUser(userId, text.toString());
+                text.append(exam.getClassRoom().getName());
+                messengerService.sendTextMessageToMessengerUser(userId, text.toString());
+            }
         }
-
     }
 
     private void appendLecturersToText(StringBuilder text, List<Lecturer> lecturers) {
@@ -130,43 +131,43 @@ public class ExamService {
     public void sendAllModulesToUser(String userId) {
         User user = userRepository.findAll().get(0);
         ModuleSchedule moduleSchedule = getModuleScheduleFromUser(user);
-
-        StringBuilder text = new StringBuilder();
-        if (moduleSchedule.getModules().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have any modules yet!");
-        } else {
-            moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
-            text.append("Here is your all modules:\n\n");
-            for (Module module : moduleSchedule.getModules()) {
-                addDateSubjectLectureToText(text, module.getDate(), module.getHours(),
-                        module.getSubject().getName(), module.getLecturers(), module.getClassRoom().getName());
+        if (moduleSchedule != null) {
+            StringBuilder text = new StringBuilder();
+            if (moduleSchedule.getModules().isEmpty()) {
+                messengerService.sendTextMessageToMessengerUser(userId, "Модули еще не назначены");
+            } else {
+                moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
+                text.append("Все твои модули :\n\n");
+                for (Module module : moduleSchedule.getModules()) {
+                    addDateSubjectLectureToText(text, module.getDate(), module.getHours(),
+                            module.getSubject().getName(), module.getLecturers(), module.getClassRoom().getName());
+                }
+                messengerService.sendTextMessageToMessengerUser(userId, text.substring(0, text.length() - 24));
             }
-
-            messengerService.sendTextMessageToMessengerUser(userId, text.substring(0, text.length() - 24));
         }
-
     }
 
     public void sendNextModuleToUser(String userId) {
         User user = userRepository.findAll().get(0);
         ModuleSchedule moduleSchedule = getModuleScheduleFromUser(user);
-
-        StringBuilder text = new StringBuilder();
-        if (moduleSchedule.getModules().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have exam yet!");
-        } else {
-            moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
-            Module module = moduleSchedule.getModules().get(0);
-            text.append("Your next module is:\n")
-                    .append(formatter.format(module.getDate()))
-                    .append(" ")
-                    .append(module.getHours())
-                    .append("\n")
-                    .append(module.getSubject().getName())
-                    .append("\n");
-            appendLecturersToText(text, module.getLecturers());
-            text.append(module.getClassRoom().getName());
-            messengerService.sendTextMessageToMessengerUser(userId, text.toString());
+        if (moduleSchedule != null) {
+            StringBuilder text = new StringBuilder();
+            if (moduleSchedule.getModules().isEmpty()) {
+                messengerService.sendTextMessageToMessengerUser(userId, "Модули еще не назначены");
+            } else {
+                moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
+                Module module = moduleSchedule.getModules().get(0);
+                text.append("Твой следуюший модуль :\n")
+                        .append(formatter.format(module.getDate()))
+                        .append(" ")
+                        .append(module.getHours())
+                        .append("\n")
+                        .append(module.getSubject().getName())
+                        .append("\n");
+                appendLecturersToText(text, module.getLecturers());
+                text.append(module.getClassRoom().getName());
+                messengerService.sendTextMessageToMessengerUser(userId, text.toString());
+            }
         }
     }
 
@@ -183,8 +184,8 @@ public class ExamService {
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());
         if (examScheduleList.isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find exam for you");
-            throw new IllegalArgumentException("Can't find exams for this user");
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Экзамены еще не назначены");
+            return null;
         } else {
             examScheduleList.get(0).getExams().forEach(exam -> {
                 if (exam.getDate().compareTo(new Date()) < 0) {
@@ -209,8 +210,8 @@ public class ExamService {
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());
         if (scheduleList.isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find module for you");
-            throw new IllegalArgumentException("Can't find modules for this user");
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Модули еще не назначены");
+            return null;
         } else {
             List<Module> modules = new ArrayList<>();
             scheduleList.get(0).getModules().forEach(module -> {

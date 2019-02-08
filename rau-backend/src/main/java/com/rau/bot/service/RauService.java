@@ -155,7 +155,7 @@ public class RauService {
 
         schedule.getWeekDayLessons().sort(Comparator.comparing(o2 -> o2.getWeekDay().getNumber()));
         for (WeekDayLesson weekDayLesson : schedule.getWeekDayLessons()) {
-            text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
+            text.append(translateEnglishWeekdayToRussian(weekDayLesson.getWeekDay().getName())).append(" : \n");
             weekDayLesson.getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
             for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
                 text.append(hourLesson.getHour()).append(RauLessonTimeUtil.getTimeByHourLesson(hourLesson.getHour().getName())).append("\n").append(hourLesson.getLesson()).append("\n\n");
@@ -165,6 +165,23 @@ public class RauService {
         System.out.println(text);
         messengerService.sendTextMessageToMessengerUser(user.getUserId(), text.substring(0, text.length() - 24));
 
+    }
+
+    private String translateEnglishWeekdayToRussian(String weekDay) {
+        switch (weekDay.toLowerCase()) {
+            case "monday":
+                return "Понедельник";
+            case "tuesday":
+                return "Вторник";
+            case "wednesday":
+                return "Среда";
+            case "thursday":
+                return "Четверг";
+            case "friday":
+                return "Пятница";
+            default:
+                return "";
+        }
     }
 
     public void sendScheduleToUserForNextLesson(User user) {
@@ -177,10 +194,9 @@ public class RauService {
         List<HourLesson> hourLessons = new ArrayList<>();
 
         if (DayOfWeek.SUNDAY.equals(localDateTime.getDayOfWeek()) || hour > 18 || hour == 18 && minute > 15) {
-
             WeekDayLesson wd = getNextLesson(schedule, localDateTime);
             messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой следуюший урок :\n"
-                    + wd.getWeekDay().getName()
+                    + translateEnglishWeekdayToRussian(wd.getWeekDay().getName())
                     + ":\n "
                     + wd.getHourLessons().get(0).getHour()
                     + wd.getHourLessons().get(0).getLesson());
@@ -189,7 +205,7 @@ public class RauService {
 
             WeekDayLesson wd = getNextLesson(schedule, localDateTime.minusDays(1));
             messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой следуюший урок :\n"
-                    + wd.getWeekDay().getName()
+                    + translateEnglishWeekdayToRussian(wd.getWeekDay().getName())
                     + "\n"
                     + wd.getHourLessons().get(0).getHour()
                     + RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(1))
@@ -204,7 +220,7 @@ public class RauService {
                     if (wdl.getWeekDay().getName().equals(localDateTime.getDayOfWeek().name())) {
                         wdl.getHourLessons().forEach(hourLesson -> {
                             if (hourLesson.getHour().getName().equals("5")) {
-                                messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your current lesson is :\n"
+                                messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой урок сейчас :\n"
                                         + localDateTime.getDayOfWeek().name() + ", " + hourLesson);
                                 has5thHourLesson[0] = true;
                             }
@@ -214,7 +230,7 @@ public class RauService {
                 if (!has5thHourLesson[0]) {
                     WeekDayLesson weekDayLesson = getNextLesson(schedule, localDateTime);
                     messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой следуюший урок :\n"
-                            + weekDayLesson.getWeekDay().getName()
+                            + translateEnglishWeekdayToRussian(weekDayLesson.getWeekDay().getName())
                             + ", "
                             + weekDayLesson.getHourLessons().get(0));
                 }
@@ -230,7 +246,7 @@ public class RauService {
 
                 hourLessons.sort(Comparator.comparing(o -> o.getHour().getName()));
 
-                StringBuilder text = new StringBuilder("Your Current Lesson is \n");
+                StringBuilder text = new StringBuilder("Твой урок сейчас \n");
                 if (hourLessons.size() > 1) {
                     messengerService.sendTextMessageToMessengerUser(user.getUserId(),
                             text.append(hourLessons.get(0).getHour())
@@ -239,7 +255,7 @@ public class RauService {
                                     .append("\n")
                                     .append(hourLessons.get(0).getLesson())
                                     .append("\n\n")
-                                    .append("Next lesson is \n")
+                                    .append("Твой следуюший урок :\n")
                                     .append(hourLessons.get(1).getHour())
                                     .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
                                     .append("\n")
@@ -256,8 +272,8 @@ public class RauService {
                     WeekDayLesson nextLesson = getNextLesson(schedule, localDateTime);
 
                     messengerService.sendTextMessageToMessengerUser(user.getUserId(),
-                            "You don't have a lesson now. Твой следуюший урок :\n" +
-                                    nextLesson.getWeekDay().getName() + ", " +
+                            "У тебя сейчас нету уроков. Твой следуюший урок :\n" +
+                                    translateEnglishWeekdayToRussian(nextLesson.getWeekDay().getName()) + ", " +
                                     nextLesson.getHourLessons().get(0));
                 }
             }
@@ -332,7 +348,7 @@ public class RauService {
         } else {
             weekDayLessons.sort(Comparator.comparing(o2 -> o2.getWeekDay().getNumber()));
             for (WeekDayLesson weekDayLesson : weekDayLessons) {
-                text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
+                text.append(translateEnglishWeekdayToRussian(weekDayLesson.getWeekDay().getName())).append(" : \n");
                 weekDayLesson.getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
                 for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
                     text.append(hourLesson.getHour().getName())
