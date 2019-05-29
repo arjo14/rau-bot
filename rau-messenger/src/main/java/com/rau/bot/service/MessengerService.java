@@ -157,7 +157,7 @@ public class MessengerService {
             case "1":
                 sendQuickRepliesToUser(userId,
                         new QuickReplyResponseDto("Хорошо! А теперь выберите институт.",
-                                Arrays.asList(new QuickReplyDto("IMI", "2"), new QuickReplyDto("ИПП", "ипп"),
+                                Arrays.asList(new QuickReplyDto("ИМИ", "2"), new QuickReplyDto("ИПП", "ипп"),
                                         new QuickReplyDto("ИГН", "игн"), new QuickReplyDto(" ИнЭкБиз", "inekbiz"))),
                         true);
                 break;

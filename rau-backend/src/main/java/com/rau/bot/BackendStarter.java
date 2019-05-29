@@ -15,7 +15,6 @@ import com.rau.bot.repository.user.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.PropertySource;
 
 import java.text.ParseException;
@@ -264,21 +263,25 @@ public class BackendStarter implements CommandLineRunner {
         Course course = courseRepository.findByName(courseName);
         if (course == null) {
             course = new Course(courseName);
+            courseRepository.save(course);
         }
         String departmentName = "ИМИ";
         Department department = departmentRepository.findByName(departmentName);
         if (department == null) {
             department = new Department(departmentName);
+            departmentRepository.save(department);
         }
         String facultyName = "ПМИ";
         Faculty faculty = facultyRepository.findByName(facultyName);
         if (faculty == null) {
             faculty = new Faculty(facultyName, department);
+            facultyRepository.save(faculty);
         }
-        String groupName = "503";
+        String groupName = "603";
         Group group = groupRepository.findByName(groupName);
         if (group == null) {
             group = new Group(groupName);
+            groupRepository.save(group);
         }
 
         User user = new User();
