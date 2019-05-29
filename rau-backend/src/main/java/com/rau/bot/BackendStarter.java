@@ -87,20 +87,20 @@ public class BackendStarter implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-//        userRepository.deleteAll();
-//        createLessonTypes();
-//        createHours();
-//        createClassRooms();
-//        createDepartments();
-//        createFaculties();
-//        createGroups();
-//        createLecturers();
-//        createSubjects();
-//
-//
-//        createMyGroupSchedule();
-//        createMyModules();
-//        createMyExams();
+        userRepository.deleteAll();
+        createLessonTypes();
+        createHours();
+        createClassRooms();
+        createDepartments();
+        createFaculties();
+        createGroups();
+        createLecturers();
+        createSubjects();
+
+
+        createMyGroupSchedule();
+        createMyModules();
+        createMyExams();
 
 
     }
@@ -182,22 +182,22 @@ public class BackendStarter implements CommandLineRunner {
 
         Exam exam = new Exam(null, Collections.singletonList(lecturerRepository.findByName("Карапетян Г.А.")),
                 subjectRepository.findByName("Уравнения математической физики"), classRoomRepository.findByName("305"),
-                "09:00", dateFormatter.parse("30.06.2018"));
+                "09:00", dateFormatter.parse("30.06.2019"));
         examList.add(exam);
 
         exam = new Exam(null, Collections.singletonList(lecturerRepository.findByName("Манукян М.Г.")),
                 subjectRepository.findByName("База Данных"), classRoomRepository.findByName("305"),
-                "09:00", dateFormatter.parse("16.06.2018"));
+                "09:00", dateFormatter.parse("16.06.2019"));
         examList.add(exam);
 
         exam = new Exam(null, Arrays.asList(lecturerRepository.findByName("Ваградян В.Г."), lecturerRepository.findByName("Беджанян А.Р.")),
                 subjectRepository.findByName("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
-                "09:00", dateFormatter.parse("20.06.2018"));
+                "09:00", dateFormatter.parse("20.06.2019"));
         examList.add(exam);
 
         exam = new Exam(null, Collections.singletonList(lecturerRepository.findByName("Арамян Р.Г.")),
                 subjectRepository.findByName("Теория вер. и мат статистика"), classRoomRepository.findByName("305"),
-                "09:00", dateFormatter.parse("11.06.2018"));
+                "09:00", dateFormatter.parse("11.06.2019"));
         examList.add(exam);
 
         examSchedule.setExams(examList);
@@ -222,29 +222,29 @@ public class BackendStarter implements CommandLineRunner {
 
         Module module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Карапетян Г.А.")),
                 subjectRepository.findByName("Уравнения математической физики"), classRoomRepository.findByName("301"),
-                "12:50", dateFormatter.parse("06.06.2018"));
+                "12:50", dateFormatter.parse("06.06.2019"));
         moduleList.add(module);
 
 
         module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Манукян М.Г.")),
                 subjectRepository.findByName("База Данных"), classRoomRepository.findByName("300"),
-                "14:35", dateFormatter.parse("01.06.2018"));
+                "14:35", dateFormatter.parse("01.06.2019"));
         moduleList.add(module);
 
 
         module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Арамян Р.Г.")),
                 subjectRepository.findByName("Теория вер. и мат статистика"), classRoomRepository.findByName("313"),
-                "10:45", dateFormatter.parse("04.06.2018"));
+                "10:45", dateFormatter.parse("04.06.2019"));
         moduleList.add(module);
 
         module = new Module(null, Arrays.asList(lecturerRepository.findByName("Ваградян В.Г."), lecturerRepository.findByName("Беджанян А.Р.")),
                 subjectRepository.findByName("Языки программирования и методы трансляции"), classRoomRepository.findByName("305"),
-                "10:45", dateFormatter.parse("07.06.2018"));
+                "10:45", dateFormatter.parse("07.06.2019"));
         moduleList.add(module);
 
         module = new Module(null, Collections.singletonList(lecturerRepository.findByName("Карапетян Г.А.")),
                 subjectRepository.findByName("Курсовая работа"), classRoomRepository.findByName("300"),
-                "09:00", dateFormatter.parse("08.06.2018"));
+                "09:00", dateFormatter.parse("08.06.2019"));
         moduleList.add(module);
 
         moduleSchedule.setModules(moduleList);

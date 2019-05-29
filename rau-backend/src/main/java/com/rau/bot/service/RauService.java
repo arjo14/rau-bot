@@ -155,7 +155,7 @@ public class RauService {
 
         schedule.getWeekDayLessons().sort(Comparator.comparing(o2 -> o2.getWeekDay().getNumber()));
         for (WeekDayLesson weekDayLesson : schedule.getWeekDayLessons()) {
-            text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
+            text.append(getWeekDayInRussian(weekDayLesson.getWeekDay().getName())).append(" : \n");
             weekDayLesson.getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
             for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
                 text.append(hourLesson.getHour()).append(RauLessonTimeUtil.getTimeByHourLesson(hourLesson.getHour().getName())).append("\n").append(hourLesson.getLesson()).append("\n\n");
@@ -169,7 +169,7 @@ public class RauService {
 
     public void sendScheduleToUserForNextLesson(User user) {
         Schedule schedule = getScheduleForUser(user);
-        StringBuilder endText = new StringBuilder("Your next lesson is ");
+        StringBuilder endText = new StringBuilder("Твой следующий урок:\n");
 
         LocalDateTime localDateTime = LocalDateTime.now();
         int hour = localDateTime.getHour();
@@ -179,8 +179,8 @@ public class RauService {
         if (DayOfWeek.SUNDAY.equals(localDateTime.getDayOfWeek()) || hour > 18 || hour == 18 && minute > 15) {
 
             WeekDayLesson wd = getNextLesson(schedule, localDateTime);
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
-                    + wd.getWeekDay().getName()
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), endText
+                    + getWeekDayInRussian(wd.getWeekDay().getName())
                     + ":\n "
                     + wd.getHourLessons().get(0).getHour()
                     + wd.getHourLessons().get(0).getLesson());
@@ -188,7 +188,7 @@ public class RauService {
         } else if (hour < 9 || hour == 9 && minute < 30) {
 
             WeekDayLesson wd = getNextLesson(schedule, localDateTime.minusDays(1));
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), endText
                     + wd.getWeekDay().getName()
                     + ", "
                     + wd.getHourLessons().get(0));
@@ -201,8 +201,8 @@ public class RauService {
                     if (wdl.getWeekDay().getName().equals(localDateTime.getDayOfWeek().name())) {
                         wdl.getHourLessons().forEach(hourLesson -> {
                             if (hourLesson.getHour().getName().equals("5")) {
-                                messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your current lesson is :\n"
-                                        + localDateTime.getDayOfWeek().name() + ", " + hourLesson);
+                                messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Твой текуший урок :\n"
+                                        + getWeekDayInRussian(localDateTime.getDayOfWeek().name()) + ", " + hourLesson);
                                 has5thHourLesson[0] = true;
                             }
                         });
@@ -210,8 +210,8 @@ public class RauService {
                 });
                 if (!has5thHourLesson[0]) {
                     WeekDayLesson weekDayLesson = getNextLesson(schedule, localDateTime);
-                    messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Your next lesson is :\n"
-                            + weekDayLesson.getWeekDay().getName()
+                    messengerService.sendTextMessageToMessengerUser(user.getUserId(), endText
+                            + getWeekDayInRussian(weekDayLesson.getWeekDay().getName())
                             + ", "
                             + weekDayLesson.getHourLessons().get(0));
                 }
@@ -227,7 +227,7 @@ public class RauService {
 
                 hourLessons.sort(Comparator.comparing(o -> o.getHour().getName()));
 
-                StringBuilder text = new StringBuilder("Your Current Lesson is \n");
+                StringBuilder text = new StringBuilder("Твой текуший урок:\n");
                 if (hourLessons.size() > 1) {
                     messengerService.sendTextMessageToMessengerUser(user.getUserId(),
                             text.append(hourLessons.get(0).getHour())
@@ -236,7 +236,7 @@ public class RauService {
                                     .append("\n")
                                     .append(hourLessons.get(0).getLesson())
                                     .append("\n\n")
-                                    .append("Next lesson is \n")
+                                    .append(endText)
                                     .append(hourLessons.get(1).getHour())
                                     .append(RauLessonTimeUtil.getTimeByHourLesson(String.valueOf(currentLessonHour)))
                                     .append("\n")
@@ -253,14 +253,31 @@ public class RauService {
                     WeekDayLesson nextLesson = getNextLesson(schedule, localDateTime);
 
                     messengerService.sendTextMessageToMessengerUser(user.getUserId(),
-                            "You don't have a lesson now. Your next lesson is :\n" +
-                                    nextLesson.getWeekDay().getName() + ", " +
+                            "У тебя сейчас нет уроков. Твой следующий урок:\n" +
+                                    getWeekDayInRussian(nextLesson.getWeekDay().getName()) + ", " +
                                     nextLesson.getHourLessons().get(0));
                 }
             }
 
         }
 
+    }
+
+    private String getWeekDayInRussian(String weekDay) {
+        switch (weekDay.toLowerCase()) {
+            case "monday":
+                return "Понедельник";
+            case "tuesday":
+                return "Вторник";
+            case "wednesday":
+                return "Среда";
+            case "thursday":
+                return "Четверг";
+            case "friday":
+                return "Пятница";
+            default:
+                return "Суббота";
+        }
     }
 
     private WeekDayLesson getNextLesson(Schedule schedule, LocalDateTime localDateTime) {
@@ -325,11 +342,11 @@ public class RauService {
                 .collect(Collectors.toList());
 
         if (weekDayLessons.isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "It's so good man, you don't have a lesson today !");
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "У тебя нету уроков сегодня!");
         } else {
             weekDayLessons.sort(Comparator.comparing(o2 -> o2.getWeekDay().getNumber()));
             for (WeekDayLesson weekDayLesson : weekDayLessons) {
-                text.append(weekDayLesson.getWeekDay().getName()).append(" : \n");
+                text.append(getWeekDayInRussian(weekDayLesson.getWeekDay().getName())).append(" : \n");
                 weekDayLesson.getHourLessons().sort(Comparator.comparing(o -> o.getHour().getName()));
                 for (HourLesson hourLesson : weekDayLesson.getHourLessons()) {
                     text.append(hourLesson.getHour().getName())
@@ -357,7 +374,7 @@ public class RauService {
                         .forEach(list::add));
         messengerService.sendTextMessageToMessengerUser(userId,
                 endText.append(list.get(0).getHour())
-                        .append(" lesson (")
+                        .append(" урок (")
                         .append(RauLessonTimeUtil.getTimeByHourLesson(lessonHour))
                         .append("): ")
                         .append(list.get(0).getLesson()).toString());
@@ -398,7 +415,7 @@ public class RauService {
     }
 
     public void sendUserNotRegistered(String userId) {
-        messengerService.sendTextMessageToMessengerUser(userId, "Sorry! You are not registered!!\nWhat are you doing here without registration?????");
+        messengerService.sendTextMessageToMessengerUser(userId, "Извините, вы еще не прошли регистрацию\nЧтобы пройти регистрацию нажмите на кнопку 'РЕГИСТРАЦИЯ'");
     }
 
     public User getUserByUserId(String userId) {
@@ -419,7 +436,7 @@ public class RauService {
                     }
                 });
         List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
-        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your department.", quickReplyDtos);
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Выберите институт.", quickReplyDtos);
         departments.forEach(department -> quickReplyDtos.add(new QuickReplyDto(department.getName(), department.getId().toString())));
         return quickReplyResponseDto;
     }
@@ -437,7 +454,7 @@ public class RauService {
                         }
                 );
         List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
-        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your Faculty.");
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Выберите факультет.");
         quickReplyResponseDto.setQuickReplyDtoList(quickReplyDtos);
         faculties.forEach(faculty -> quickReplyDtos.add(new QuickReplyDto(faculty.getName(), faculty.getId().toString())));
         return quickReplyResponseDto;
@@ -455,7 +472,7 @@ public class RauService {
                     }
                 });
         List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
-        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your Course.");
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Выберите курс.");
         quickReplyResponseDto.setQuickReplyDtoList(quickReplyDtos);
 
         courses.forEach(course -> quickReplyDtos.add(new QuickReplyDto(course.getName(), course.getId().toString())));
@@ -475,7 +492,7 @@ public class RauService {
                     }
                 });
         List<QuickReplyDto> quickReplyDtos = new LinkedList<>();
-        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Choose your Group.");
+        QuickReplyResponseDto quickReplyResponseDto = new QuickReplyResponseDto("Выберите группу.");
         quickReplyResponseDto.setQuickReplyDtoList(quickReplyDtos);
 
         groups.forEach(group -> quickReplyDtos.add(new QuickReplyDto(group.getName(), group.getId().toString())));
@@ -491,7 +508,7 @@ public class RauService {
                         && schedule.getArmenianSector().equals(fromArmenianSector)))
                 .collect(Collectors.toList());
         if (list.size() > 1) {
-            return new QuickReplyResponseDto("Choose your group part.",
+            return new QuickReplyResponseDto("Ваша группа состоит из двух частей.Выберите вашу часть.",
                     Arrays.asList(new QuickReplyDto("1", "1"),
                             new QuickReplyDto("2", "2")));
         } else {

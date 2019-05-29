@@ -43,7 +43,7 @@ public class MessengerBot {
         this.messengerService = messengerService;
 
         this.messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
-        messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
+//        messenger.deleteSettings(MessengerSettingProperty.PERSISTENT_MENU);
 
         final PostbackCallToAction callToActionAA = PostbackCallToAction.create("Next Lesson", "NEXT");
         final PostbackCallToAction callToActionAB = PostbackCallToAction.create("Today", "TODAY");

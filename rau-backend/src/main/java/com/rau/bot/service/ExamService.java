@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.Format;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -65,10 +66,10 @@ public class ExamService {
 
         StringBuilder text = new StringBuilder();
         if (examSchedule.getExams().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have any exams yet!");
+            messengerService.sendTextMessageToMessengerUser(userId, "У тебя пока что нет назначенных экзаменов!");
         } else {
             examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
-            text.append("Here is your all exams:\n\n");
+            text.append("Все экзамены:\n\n");
             for (Exam exam : examSchedule.getExams()) {
                 text.append(formatter.format(exam.getDate()))
                         .append(" ")
@@ -95,11 +96,11 @@ public class ExamService {
 
         StringBuilder text = new StringBuilder();
         if (examSchedule.getExams().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have exam yet!");
+            messengerService.sendTextMessageToMessengerUser(userId, "У тебя пока что нет назначенных экзаменов!");
         } else {
             examSchedule.getExams().sort(Comparator.comparing(Exam::getDate));
             Exam exam = examSchedule.getExams().get(0);
-            text.append("Your next exam is:\n")
+            text.append("Твой следуюший экзамен:\n")
                     .append(formatter.format(exam.getDate()))
                     .append(" ")
                     .append(exam.getHours())
@@ -122,10 +123,10 @@ public class ExamService {
 
         StringBuilder text = new StringBuilder();
         if (moduleSchedule.getModules().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have any modules yet!");
+            messengerService.sendTextMessageToMessengerUser(userId, "У тебя пока что нет назначенных модулей!");
         } else {
             moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
-            text.append("Here is your all modules:\n\n");
+            text.append("Все модули:\n\n");
             for (Module module : moduleSchedule.getModules()) {
                 text.append(formatter.format(module.getDate()))
                         .append(" ")
@@ -153,11 +154,11 @@ public class ExamService {
 
         StringBuilder text = new StringBuilder();
         if (moduleSchedule.getModules().isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(userId, "You don't have exam yet!");
+            messengerService.sendTextMessageToMessengerUser(userId, "У тебя пока что нет назначенных модулей!");
         } else {
             moduleSchedule.getModules().sort(Comparator.comparing(Module::getDate));
             Module module = moduleSchedule.getModules().get(0);
-            text.append("Your next module is:\n")
+            text.append("Твой следуюший модуль:\n")
                     .append(formatter.format(module.getDate()))
                     .append(" ")
                     .append(module.getHours())
@@ -185,14 +186,16 @@ public class ExamService {
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());
         if (scheduleList.isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find exam for you");
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "У тебя пока что нет назначенных экзаменов");
             throw new IllegalArgumentException("Can't find exams for this user");
         } else {
+            List<Exam> removedExams = new ArrayList<>();
             scheduleList.get(0).getExams().forEach(exam -> {
                 if (exam.getDate().compareTo(new Date()) < 0) {
-                    scheduleList.get(0).getExams().remove(exam);
+                    removedExams.add(exam);
                 }
             });
+            scheduleList.get(0).getExams().removeAll(removedExams);
             examScheduleRepository.save(scheduleList.get(0));
             return examScheduleRepository.findById(scheduleList.get(0).getId(), examWidth).get();
         }
@@ -210,14 +213,19 @@ public class ExamService {
                 && schedule.getGroup().equals(group))
                 .collect(Collectors.toList());
         if (scheduleList.isEmpty()) {
-            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "Can't find module for you");
+            messengerService.sendTextMessageToMessengerUser(user.getUserId(), "У тебя пока что нет назначенных модулей");
             throw new IllegalArgumentException("Can't find modules for this user");
         } else {
-            scheduleList.get(0).getModules().forEach(module -> {
-                if (module.getDate().compareTo(new Date()) < 0) {
-                    scheduleList.get(0).getModules().remove(module);
-                }
-            });
+            List<Module> removedModules = new ArrayList<>();
+            scheduleList
+                    .get(0)
+                    .getModules()
+                    .forEach(module -> {
+                        if (module.getDate().compareTo(new Date()) < 0) {
+                            removedModules.add(module);
+                        }
+                    });
+            scheduleList.get(0).getModules().removeAll(removedModules);
             moduleScheduleRepository.save(scheduleList.get(0));
             return moduleScheduleRepository.findById(scheduleList.get(0).getId(), examWidth).get();
         }
